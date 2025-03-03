@@ -4,7 +4,8 @@ import bot_secrets
 import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 import TicTacToe
-import FourInARow
+import FourInRow
+import Trivia
 
 logging.basicConfig(
     format="[%(levelname)s %(asctime)s %(module)s:%(lineno)d] %(message)s",
@@ -16,8 +17,12 @@ logger = logging.getLogger(__name__)
 bot = telebot.TeleBot(bot_secrets.TOKEN)
 
 games = {"Tic-Tac-Toe": TicTacToe,
-        "4-In-A-Row": FourInARow,}
+        "4-In-A-Row": FourInRow,
+        "Trivia": Trivia,
+         }
+
 game = None
+
 
 @bot.message_handler(commands=["start", "exit"])
 def send_welcome(message: telebot.types.Message):
@@ -27,12 +32,12 @@ def send_welcome(message: telebot.types.Message):
     if text == "start":
         logger.info(f"+ Start chat #{message.chat.id} from {message.chat.username}")
         bot.reply_to(message, "🤖 Welcome! 🤖")
-    else: # text == "exit"
+    else:  # text == "exit"
         if game is not None:
             game.reset_state()
             game = None
 
-    keyboard = InlineKeyboardMarkup()
+    keyboard = InlineKeyboardMarkup(row_width=1)
     keyboard.add(InlineKeyboardButton("Play a game", callback_data="Play"))
     keyboard.add(InlineKeyboardButton("Settings", callback_data="Settings"))
     keyboard.add(InlineKeyboardButton("LeaderBoards", callback_data="LeaderBoards"))
@@ -44,15 +49,15 @@ def callback_query(call):
     global game
     game = None
 
-    bot.edit_message_reply_markup(chat_id=call.message.chat.id, 
-                              message_id=call.message.message_id, 
-                              reply_markup=InlineKeyboardMarkup())
+    bot.edit_message_reply_markup(chat_id=call.message.chat.id,
+                                  message_id=call.message.message_id,
+                                  reply_markup=InlineKeyboardMarkup())
     
     # chat_id = call.message.chat.id
     # message_id = call.message.message_id
 
     if call.data == "Play":
-        keyboard = InlineKeyboardMarkup()
+        keyboard = InlineKeyboardMarkup(row_width=1)
         game_options = []
         for g in games.keys():
             game_options.append(InlineKeyboardButton(g, callback_data=g))
@@ -62,8 +67,9 @@ def callback_query(call):
         #bot.delete_message(chat_id, message_id)
     elif call.data == 'Settings':
         pass
-    else: # call.data == 'LeaderBoards'
+    else:  # call.data == 'LeaderBoards'
         pass
+
 
 @bot.callback_query_handler(func=lambda call: call.data not in ["Play", "Settings", "LeaderBoards"])
 def callback_query_for_choosing_game(call):
@@ -71,9 +77,9 @@ def callback_query_for_choosing_game(call):
     if game is not None:
         game.callback_query(call)
         return
-    bot.edit_message_reply_markup(chat_id=call.message.chat.id, 
-                              message_id=call.message.message_id, 
-                              reply_markup=InlineKeyboardMarkup())
+    bot.edit_message_reply_markup(chat_id=call.message.chat.id,
+                                  message_id=call.message.message_id,
+                                  reply_markup=InlineKeyboardMarkup())
 
     game = games[call.data]
     game.start(call.message)

@@ -59,8 +59,8 @@ def create_keyboard(options):
     return keyboard
 
 
-@bot.message_handler(commands=["trivia"])
-def start_trivia(message):
+#@bot.message_handler(commands=["trivia"])
+def start(message):
     """Start a trivia game by sending a question."""
     user_id = message.chat.id
     trivia_data = get_trivia_question()
@@ -85,8 +85,8 @@ def start_trivia(message):
     bot.send_message(user_id, text, parse_mode="Markdown", reply_markup=create_keyboard(options))
 
 
-@bot.callback_query_handler(func=lambda call: call.data)
-def check_answer(call):
+#@bot.callback_query_handler(func=lambda call: call.data)
+def callback_query(call):
     """Check the player's answer."""
     user_id = call.message.chat.id
     if user_id not in trivia_sessions:
@@ -101,5 +101,10 @@ def check_answer(call):
 
     del trivia_sessions[user_id]  # Remove session after answering
 
+def reset_state():
+    #del games[chat_id]
+    # delete from cache
+    print("skipping trivia reset")
 
-(bot.polling())
+
+#(bot.polling())

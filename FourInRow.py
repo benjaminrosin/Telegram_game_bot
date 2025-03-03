@@ -70,16 +70,16 @@ def create_keyboard():
     return keyboard
 
 
-@bot.message_handler(commands=["start4inarow"])
-def start_game(message):
+#@bot.message_handler(commands=["start4inarow"])
+def start(message):
     """Start a new 4-in-a-Row game."""
     chat_id = message.chat.id
     games[chat_id] = {"grid": create_grid(), "turn": RED}
     bot.send_message(chat_id, format_grid(games[chat_id]["grid"]), reply_markup=create_keyboard())
 
 
-@bot.callback_query_handler(func=lambda call: call.data.isdigit())
-def handle_move(call):
+#@bot.callback_query_handler(func=lambda call: call.data.isdigit())
+def callback_query(call):
     """Handle player moves."""
     chat_id = call.message.chat.id
     if chat_id not in games:
@@ -108,4 +108,9 @@ def handle_move(call):
     bot.edit_message_text(format_grid(game["grid"]), chat_id, call.message.message_id, reply_markup=create_keyboard())
 
 
-bot.polling()
+def reset_state():
+    #del games[chat_id]
+    # delete from cache
+    print("skipping 4 in row reset")
+
+#bot.polling()
