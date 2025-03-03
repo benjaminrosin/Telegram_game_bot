@@ -29,13 +29,12 @@ def send_welcome(message: telebot.types.Message):
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "play")
-def show_game_menu(call):
+def start(call):
     markup = telebot.types.InlineKeyboardMarkup(row_width=3)
     markup.add(
         telebot.types.InlineKeyboardButton("🧱", callback_data="🧱"),
         telebot.types.InlineKeyboardButton("📄", callback_data="📄"),
         telebot.types.InlineKeyboardButton("✂️", callback_data="✂️"),
-        telebot.types.InlineKeyboardButton("❌ Exit", callback_data="exit"),
     )
     bot.send_message(
         chat_id=call.message.chat.id,
@@ -44,22 +43,17 @@ def show_game_menu(call):
     )
 
 
-@bot.callback_query_handler(func=lambda call: call.data == "exit")
-def exit_game(call):
-    bot.edit_message_text(
-        chat_id=call.message.chat.id,
-        message_id=call.message.message_id,
-        text="Thanks for playing! 👋",
-    )
-
-
 @bot.callback_query_handler(func=lambda call: call.data in ["🧱", "📄", "✂️"])
-def play_rps(call: telebot.types.CallbackQuery):
+def callback_query(call: telebot.types.CallbackQuery):
     user_choice = call.data
     bot_choice = rps_game(user_choice)
     response = f"You chose: {user_choice}\nBot chose: {bot_choice}"
     bot.send_message(chat_id=call.message.chat.id, text=response)
-    show_game_menu(call)
+    start(call)
+
+
+def reset_state():
+    pass
 
 
 logger.info("* starting bot")
