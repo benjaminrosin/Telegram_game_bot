@@ -31,7 +31,6 @@ def start(message):
 
 def check_status():
     winner: str = ""
-    over: bool = False
     for i in range(3):
         if state[3*i] == state[3*i + 1] == state[3*i + 2] != EMPTY:
             winner = state[3*i]
