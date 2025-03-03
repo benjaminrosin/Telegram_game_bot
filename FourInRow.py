@@ -17,14 +17,14 @@ def create_grid():
     return [[EMPTY] * COLS for _ in range(ROWS)]
 
 
-def format_grid(grid):
+def format_grid(grid: list[list[str]]) -> str:
     """Convert grid to a string for Telegram messages."""
     column_numbers = "1️⃣2️⃣3️⃣4️⃣5️⃣6️⃣7️⃣\n"
     grid_str = "\n".join("".join(row) for row in grid)
-    return f"{column_numbers}{grid_str}"
+    return f"{grid_str}\n{column_numbers}"
 
 
-def drop_piece(grid, column, piece):
+def drop_piece(grid: list[list[str]], column: int, piece: str) -> bool:
     """Drop a piece into the column if possible."""
     for row in reversed(grid):
         if row[column] == EMPTY:
@@ -33,7 +33,7 @@ def drop_piece(grid, column, piece):
     return False  # Column is full
 
 
-def check_winner(grid, piece):
+def check_winner(grid: list[list[str]], piece: str) -> bool:
     """Check for a win (horizontal, vertical, diagonal)."""
     # Horizontal & Vertical
     for r in range(ROWS):
@@ -57,12 +57,12 @@ def check_winner(grid, piece):
     return False
 
 
-def is_draw(grid):
+def is_draw(grid: list[list[str]]) -> bool:
     """Check if the grid is full (draw)."""
     return all(cell != EMPTY for row in grid for cell in row)
 
 
-def create_keyboard():
+def create_keyboard() -> InlineKeyboardMarkup:
     """Generate inline keyboard for column selection."""
     keyboard = InlineKeyboardMarkup()
     buttons = [InlineKeyboardButton(str(i+1), callback_data=str(i)) for i in range(COLS)]
@@ -70,16 +70,14 @@ def create_keyboard():
     return keyboard
 
 
-#@bot.message_handler(commands=["start4inarow"])
-def start(message):
+def start(message: telebot.types.Message):
     """Start a new 4-in-a-Row game."""
     chat_id = message.chat.id
     games[chat_id] = {"grid": create_grid(), "turn": RED}
     bot.send_message(chat_id, format_grid(games[chat_id]["grid"]), reply_markup=create_keyboard())
 
 
-#@bot.callback_query_handler(func=lambda call: call.data.isdigit())
-def callback_query(call):
+def callback_query(call: telebot.types.CallbackQuery):
     """Handle player moves."""
     chat_id = call.message.chat.id
     if chat_id not in games:
@@ -112,5 +110,3 @@ def reset_state():
     #del games[chat_id]
     # delete from cache
     print("skipping 4 in row reset")
-
-#bot.polling()
