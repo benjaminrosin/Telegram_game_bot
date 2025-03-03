@@ -91,3 +91,8 @@ def reset_state():
     print("skipping trivia reset")
 
 
+def about():
+    return ('🧠 * Trivia Challenge * 🧠\n'
+            'Answer questions, and compete for the top spot! 🏆\n'
+            "Ready to prove you're the ultimate trivia master? 🎯🎉")
+

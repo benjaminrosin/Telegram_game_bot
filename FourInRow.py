@@ -110,3 +110,9 @@ def reset_state():
     #del games[chat_id]
     # delete from cache
     print("skipping 4 in row reset")
+
+
+def about():
+    return ('🔴🟡 * 4 in a Row * 🟡🔴\n'
+            'Drop your pieces, connect four, and outplay your opponent! 🏆\n'
+            'Think ahead, block their moves, and claim victory! 🎯🔥')

@@ -83,3 +83,9 @@ def callback_query(call):
     start(call.message)
     
     bot.answer_callback_query(call.id)
+
+
+def about():
+    return ('⭕❌ * Tic Tec Toe * ❌⭕\n'
+            'Think fast, line up three, and claim victory! 🏆\n'
+            'Are you ready to outsmart your opponent? 🎯🔥')

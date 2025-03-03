@@ -1,11 +1,11 @@
 import logging
-
 import bot_secrets
 import telebot
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
 import TicTacToe
 import FourInRow
 import Trivia
+import urllib.parse
 
 logging.basicConfig(
     format="[%(levelname)s %(asctime)s %(module)s:%(lineno)d] %(message)s",
@@ -24,27 +24,37 @@ games = {"Tic-Tac-Toe": TicTacToe,
 game = None
 
 
-@bot.message_handler(commands=["start", "exit"])
-def send_welcome(message: telebot.types.Message):
-    global game
-
-    text = message.text
-    if text == "start":
-        logger.info(f"+ Start chat #{message.chat.id} from {message.chat.username}")
-        bot.reply_to(message, "🤖 Welcome! 🤖")
-    else:  # text == "exit"
-        if game is not None:
-            game.reset_state()
-            game = None
+def send_main_menu(message: telebot.types.Message):
+    share_message = "Check out this awesome game bot!\nLet's play together: @not_a_game_benjamin_bot"
+    encoded_share_message = urllib.parse.quote(share_message)
 
     keyboard = InlineKeyboardMarkup(row_width=1)
     keyboard.add(InlineKeyboardButton("Play a game", callback_data="Play"))
     keyboard.add(InlineKeyboardButton("Settings", callback_data="Settings"))
     keyboard.add(InlineKeyboardButton("LeaderBoards", callback_data="LeaderBoards"))
+    keyboard.add(InlineKeyboardButton("Fetchers", callback_data="Fetchers"))
+    keyboard.add(InlineKeyboardButton("Share with Friends", url=f"tg://msg?text={encoded_share_message}"))
     bot.send_message(message.chat.id, "Choose an option:", reply_markup=keyboard)
 
 
-@bot.callback_query_handler(func=lambda call: call.data in ["Play", "Settings", "LeaderBoards"])
+@bot.message_handler(commands=["start", "exit"])
+def send_welcome(message: telebot.types.Message):
+    global game
+
+    text = message.text
+    if text == "/start":
+        logger.info(f"+ Start chat #{message.chat.id} from {message.chat.username}")
+        bot.reply_to(message, "🤖 Welcome! 🤖")
+    else:  # text == "exit"
+        bot.reply_to(message, "🤖 Hi again 🤖")
+        if game is not None:
+            game.reset_state()
+            game = None
+
+    send_main_menu(message)
+
+
+@bot.callback_query_handler(func=lambda call: call.data in ["Play", "Settings", "LeaderBoards", "Fetchers"])
 def callback_query(call):
     global game
     game = None
@@ -67,8 +77,20 @@ def callback_query(call):
         #bot.delete_message(chat_id, message_id)
     elif call.data == 'Settings':
         pass
-    else:  # call.data == 'LeaderBoards'
-        pass
+    elif call.data == 'LeaderBoards':
+        scoreboard = "🏆 *Scoreboard* 🏆\n\n"
+        for g in games:
+            top = ['a', 'b', 'c']  # use mongo to get them
+            scoreboard += '*{}*:\n🥇 *{}*\n🥈 *{}*\n🥉 *{}*\n\n'.format(g, *top)
+        bot.send_message(call.message.chat.id, scoreboard, parse_mode='Markdown')
+        send_main_menu(call.message)
+    elif call.data == 'Fetchers':
+        msg = ''
+        for g in games.values():
+            msg += g.about()
+            msg += '\n\n'
+        bot.send_message(call.message.chat.id, msg, parse_mode='Markdown')
+        send_main_menu(call.message)
 
 
 @bot.callback_query_handler(func=lambda call: call.data not in ["Play", "Settings", "LeaderBoards"])
