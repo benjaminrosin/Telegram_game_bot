@@ -30,7 +30,7 @@ def send_rps_buttons(chat_id):
 def callback_query(call: telebot.types.CallbackQuery):
     user_choice = call.data
     bot_choice = rps_game(user_choice)
-    response = f"You chose: {user_choice}\nBot chose: {bot_choice}"
+    response = f"You chose: {user_choice}\nOpponent chose: {bot_choice}"
 
     # Edit the previous message instead of sending a new one
     bot.edit_message_text(
@@ -39,12 +39,3 @@ def callback_query(call: telebot.types.CallbackQuery):
 
     # Send new buttons for replaying
     send_rps_buttons(call.message.chat.id)
-
-
-def reset_state():
-    pass
-
-
-logger.info("* starting bot")
-bot.infinity_polling()
-logger.info("* goodbye!")

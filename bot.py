@@ -7,12 +7,9 @@ import FourInRow
 import Trivia
 import utils
 import emoji
-<<<<<<< HEAD
 import rock_paper_scissors.rps_bot as Rps
-=======
 import db_connect as db
-#import rock_paper_scissors.rps_bot as Rps
->>>>>>> 0bf20de132f676a5a5142e85ea465c31b0c5b86c
+
 
 logging.basicConfig(
     format="[%(levelname)s %(asctime)s %(module)s:%(lineno)d] %(message)s",
@@ -30,12 +27,11 @@ games = {
     "rock-paper-scissors": Rps,
 }
 
-#single_player_games = ["rock-paper-scissors"]
+# single_player_games = ["rock-paper-scissors"]
 
 
 @bot.message_handler(commands=["start", "exit"])
 def send_welcome(message: telebot.types.Message):
-
     text = message.text
     if text == "/start":
         logger.info(f"+ Start chat #{message.chat.id} from {message.chat.username}")
@@ -99,6 +95,7 @@ def fetchers_callback_query(call):
 # start
 # callback_query
 
+
 @bot.callback_query_handler(func=lambda call: call.data in games.keys())
 def callback_query_for_choosing_game(call):
     game_type = call.data
@@ -110,9 +107,9 @@ def callback_query_for_choosing_game(call):
         # Retrive other player's data - no queues for single
         other_user_id = queue["user_id"]
         # Queue exists, delete it and create a new game
-        db.delete_queue(other_user_id)
-        state = games[game_type].init_state()
-        db.create_state(user_id, other_user_id, game_type, state)
+        state_in_game = games[game_type].init_state()
+        state = db.create_state(user_id, other_user_id, game_type, state_in_game)
+        games[game_type].start(state)
         games[game_type].start()
     else:
         # Queue does not exists, create one
@@ -126,9 +123,9 @@ def callback_query_for_move(call):
     user_id = call.message.from_user.id
     state = db.get_state_info("user_id", user_id)
     if state is not None:
-        #is_single =  db.is_single(user_id) - Single-Player = True, Multi-Player = False
+        # is_single =  db.is_single(user_id) - Single-Player = True, Multi-Player = False
         game_type = state["game_type"]
-        curr_game = games[game_type] # current game module
+        curr_game = games[game_type]  # current game module
         curr_game.callback_query(call, state)
 
     # ask what to send
@@ -143,25 +140,16 @@ def raname(message: telebot.types.Message):
     )
     arr = message.text.split()
     if len(arr) != 2:
-<<<<<<< HEAD
         bot.reply_to(
             message, "correct use:\n/rename <new_name>\nthe name cannot contain spaces"
         )
-    else:
+    else:  # correct behavior
         bot.reply_to(message, f"you choose {arr[1]}")
         logger.info(
             f"[#{message.chat.id}.{message.message_id} {message.chat.username!r}] {message.text!r}"
         )
-        print("update DB")
-=======
-        bot.reply_to(message, "correct use:\n/rename <new_name>\nthe name cannot contain spaces")
-    else: # correct behavior
-        bot.reply_to(message, f"you choose {arr[1]}")
-        logger.info(f"[#{message.chat.id}.{message.message_id} {message.chat.username!r}] {message.text!r}")
-        #print('update DB')
-        db.get_user_info(message.from_user.id, { "user_name": arr[1] })
-
->>>>>>> 0bf20de132f676a5a5142e85ea465c31b0c5b86c
+        # print('update DB')
+        db.get_user_info(message.from_user.id, {"user_name": arr[1]})
 
 
 def is_emoji(s: str) -> bool:
@@ -177,18 +165,17 @@ def reemoji(message: telebot.types.Message):
     arr = message.text.split()
     if len(arr) != 2 or not is_emoji(arr[1]):
         bot.reply_to(message, "correct use:\n/reemoji <new_emoji>")
-    else: # correct behavior
+    else:  # correct behavior
         bot.reply_to(message, f"you choose {arr[1]}")
-<<<<<<< HEAD
         logger.info(
             f"[#{message.chat.id}.{message.message_id} {message.chat.username!r}] {message.text!r}"
         )
         print("update DB")
-=======
-        logger.info(f"[#{message.chat.id}.{message.message_id} {message.chat.username!r}] {message.text!r}")
-        #print('update DB')
-        db.get_user_info(message.from_user.id, { "emoji": arr[1] })
->>>>>>> 0bf20de132f676a5a5142e85ea465c31b0c5b86c
+        logger.info(
+            f"[#{message.chat.id}.{message.message_id} {message.chat.username!r}] {message.text!r}"
+        )
+        # print('update DB')
+        db.get_user_info(message.from_user.id, {"emoji": arr[1]})
 
 
 @bot.message_handler(commands=["help", "h"])
