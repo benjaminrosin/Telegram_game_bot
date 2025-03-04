@@ -1,11 +1,10 @@
-import random
 from random import randrange
 
 
 def rps_game(player_choice):
     suggestions = ["✂️", "📄", "🧱"]
 
-    bot_choice = suggestions[random.randrange(0, 3)]
+    bot_choice = suggestions[randrange(0, 3)]
 
     if bot_choice == player_choice:
         result = f"{bot_choice} \ntie"
