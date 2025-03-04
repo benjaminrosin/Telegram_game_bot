@@ -1,7 +1,7 @@
 import logging
 import bot_secrets
 import telebot
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 import TicTacToe
 import FourInRow
 import Trivia
