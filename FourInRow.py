@@ -1,30 +1,32 @@
 import random
-
 import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 import bot_secrets
 import utils
+import logging
+import db_connect as db
 
 bot = telebot.TeleBot(bot_secrets.TOKEN)
 
-# Game storage: { chat_id: { "grid": [...], "turn": "🔴" } }
-games = {}
+logger = logging.getLogger(__name__)
+
+EMPTY = ' '
+X, O = 'X', 'O'  # noqa: E741
+WAIT_MSG = "Wait for your opponent's move"
+YOURS_MSG = "Your move!"
+
+logging.basicConfig(
+    format="[%(levelname)s %(asctime)s %(module)s:%(lineno)d] %(message)s",
+    level=logging.INFO,
+)
 
 ROWS, COLS = 6, 7
 EMPTY, RED, YELLOW = "⚪", "🔴", "🟡"
+PIECES = ["🔴", "🟡"]
 
 
 def init_state() -> list[list[str]]:
     return [[EMPTY] * COLS for _ in range(ROWS)]
-
-
-def random_move() -> int:
-    return random.randint(0, 8)
-
-
-#def create_grid():
-#    """Initialize an empty grid."""
-#    return [[EMPTY] * COLS for _ in range(ROWS)]
 
 
 def format_grid(grid: list[list[str]]) -> str:
@@ -80,42 +82,76 @@ def create_keyboard() -> InlineKeyboardMarkup:
     return keyboard
 
 
-def start(message: telebot.types.Message):
+def start(state: dict):
     """Start a new 4-in-a-Row game."""
-    chat_id = message.chat.id
-    games[chat_id] = {"grid": create_grid(), "turn": RED}
-    bot.send_message(chat_id, format_grid(games[chat_id]["grid"]), reply_markup=create_keyboard())
+    user1_id, user2_id = state["user_id_arr"]
+
+    turn = state["turn"]
+    msg = [None, None]
+    m1 = bot.send_message(state["user_id_arr"][not turn],
+                          f"Game Started, {WAIT_MSG}\n{format_grid(state["state"])}",
+                          reply_markup=create_keyboard())
+    m2 = bot.send_message(state["user_id_arr"][turn],
+                          f"Game Started, {YOURS_MSG}\n{format_grid(state["state"])}",
+                          reply_markup=create_keyboard())
+    msg[not turn] = m1.id
+    msg[turn] = m2.id
+
+    logger.info(f"starts {__name__} game, between: {state['user_id_arr']}")
+    db.update_state_info(user1_id, {"msg_id_arr": msg})
 
 
-def callback_query(call: telebot.types.CallbackQuery):
+def callback_query(call: telebot.types.CallbackQuery, state: dict):
     """Handle player moves."""
-    chat_id = call.message.chat.id
-    if chat_id not in games:
-        bot.answer_callback_query(call.id, "Game not found.")
+    turn = state["turn"]
+    if call.from_user.id != state["user_id_arr"][turn]:
+        bot.answer_callback_query(call.id, "It's not your turn")
         return
 
-    game = games[chat_id]
+    grid = state["state"]
     column = int(call.data)
 
-    if not drop_piece(game["grid"], column, game["turn"]):
+    if not drop_piece(grid, column, PIECES[turn]):
         bot.answer_callback_query(call.id, "Column is full! Choose another.")
         return
 
-    if check_winner(game["grid"], game["turn"]):
-        bot.edit_message_text(format_grid(game["grid"]) + f"\n\n🎉 {game['turn']} Wins!", chat_id, call.message.message_id)
-        del games[chat_id]
-        utils.send_main_menu(call.message, bot)
+    if check_winner(grid, PIECES[turn]):
+        bot.edit_message_text(f"{format_grid(state["state"])}\n\n🎉 You Won!",
+                              state["user_id_arr"][turn],
+                              state["msg_id_arr"][turn],
+                              reply_markup=InlineKeyboardMarkup())
+        bot.edit_message_text(f"{format_grid(state["state"])}\n\nYou Lost!",
+                              state["user_id_arr"][not turn],
+                              state["msg_id_arr"][not turn],
+                              reply_markup=InlineKeyboardMarkup())
+
+        utils.send_main_menu(state["user_id_arr"][0], bot)
+        utils.send_main_menu(state["user_id_arr"][1], bot)
         return
 
-    if is_draw(game["grid"]):
-        bot.edit_message_text(format_grid(game["grid"]) + "\n\n😲 It's a Draw!", chat_id, call.message.message_id)
-        del games[chat_id]
-        utils.send_main_menu(call.message, bot)
+    if is_draw(grid):
+        for i in [0, 1]:
+            bot.edit_message_text(f"{format_grid(state["state"])}\n\nIts a Draw",
+                                  state["user_id_arr"][i],
+                                  state["msg_id_arr"][i],
+                                  reply_markup=InlineKeyboardMarkup())
+
+            utils.send_main_menu(state["user_id_arr"][i], bot)
         return
 
-    # Switch turns
-    game["turn"] = YELLOW if game["turn"] == RED else RED
-    bot.edit_message_text(format_grid(game["grid"]), chat_id, call.message.message_id, reply_markup=create_keyboard())
+    db.update_state_info(state["user_id_arr"][turn], {"state": grid, "turn": 1-turn})
+    logger.info(f"state after: {db.get_state_info_by_ID(state["user_id_arr"][turn])}")
+
+    #bot.edit_message_text(format_grid(game["grid"]), chat_id, call.message.message_id, reply_markup=create_keyboard())
+
+    bot.edit_message_text(f"{WAIT_MSG}\n{format_grid(state["state"])}",
+                          state["user_id_arr"][turn],
+                          state["msg_id_arr"][turn],
+                          reply_markup=create_keyboard())
+    bot.edit_message_text(f"{YOURS_MSG}\n{format_grid(state["state"])}",
+                          state["user_id_arr"][not turn],
+                          state["msg_id_arr"][not turn],
+                          reply_markup=create_keyboard())
 
 
 def about():

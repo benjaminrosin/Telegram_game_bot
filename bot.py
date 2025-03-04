@@ -26,8 +26,6 @@ games = {
     "rock-paper-scissors": Rps,
 }
 
-#single_player_games = ["rock-paper-scissors"]
-
 
 def check_register(message: telebot.types.Message):
     user_id = message.from_user.id
@@ -35,18 +33,26 @@ def check_register(message: telebot.types.Message):
     if not user:
         db.create_user(user_id, message.chat.id, message.from_user.username, "o")
 
-@bot.message_handler(commands=["start", "exit"])
+
+@bot.message_handler(commands=["start"])
 def send_welcome(message: telebot.types.Message):
+    logger.info(f"+ Start chat #{message.chat.id} from {message.chat.username}")
+    check_register(message)
 
-    text = message.text
-    if text == "/start":
-        logger.info(f"+ Start chat #{message.chat.id} from {message.chat.username}")
-        bot.reply_to(message, "🤖 Welcome! 🤖")
-        check_register(message)
-    else:  # text == "exit"
-        bot.reply_to(message, "🤖 Hi again 🤖")
+    user = db.get_user_info("user_id", message.chat.id)
+    bot.reply_to(message, f"🤖 Welcome! 🤖\n"
+                          f"Your Name is: {user['user_name']}\n"
+                          f"Your emoji is: {user['emoji']}\n"
+                          f"use '/rename' or '/reemoji' to change them")
 
-    utils.send_main_menu(message, bot)
+    utils.send_main_menu(message.from_user.id, bot)
+
+
+@bot.message_handler(commands=["exit"])
+def main_screen(message: telebot.types.Message):
+    logger.info(f"+ exit chat #{message.chat.id} from {message.chat.username}")
+    bot.reply_to(message, "🤖 Hi again 🤖")
+    utils.send_main_menu(message.from_user.id, bot)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "Play")
@@ -71,7 +77,7 @@ def help_callback_query(call):
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "LeaderBoards")
-def scoreboard_callback_query(call):
+def scoreboard_callback_query(call: telebot.types.CallbackQuery):
     utils.edit_selected_msg(call, bot)
 
     scoreboard = "🏆 *Scoreboard* 🏆\n\n"
@@ -80,11 +86,11 @@ def scoreboard_callback_query(call):
         scoreboard += '*{}*:\n🥇 *{}*\n🥈 *{}*\n🥉 *{}*\n\n'.format(g, *top)
 
     bot.send_message(call.message.chat.id, scoreboard, parse_mode="Markdown")
-    utils.send_main_menu(call.message, bot)
+    utils.send_main_menu(call.from_user.id, bot)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "Features")
-def fetchers_callback_query(call):
+def fetchers_callback_query(call: telebot.types.CallbackQuery):
     utils.edit_selected_msg(call, bot)
 
     msg = ""
@@ -93,7 +99,7 @@ def fetchers_callback_query(call):
         msg += "\n\n"
 
     bot.send_message(call.message.chat.id, msg, parse_mode="Markdown")
-    utils.send_main_menu(call.message, bot)
+    utils.send_main_menu(call.from_user.id, bot)
 
 
 # TO CHANGE
@@ -102,13 +108,20 @@ def fetchers_callback_query(call):
 # callback_query
 
 @bot.callback_query_handler(func=lambda call: call.data in games.keys())
-def callback_query_for_choosing_game(call):
+def callback_query_for_choosing_game(call: telebot.types.CallbackQuery):
     game_type = call.data
     user_id = call.from_user.id
     chat_id = call.message.chat.id
+
+    if game_type == "Trivia":
+        state_in_game = games[game_type].init_state()
+        state = db.create_state(user_id, 0, game_type, state_in_game)
+        games[game_type].start(state)
+        return
+
     # check if a queue exists
     queue = db.get_queue_info("game_type", game_type)
-    if queue is not None:
+    if queue:
         # Retrive other player's data - no queues for single
         other_user_id = queue["user_id"]
         # Queue exists, delete it and create a new game
@@ -119,12 +132,12 @@ def callback_query_for_choosing_game(call):
     else:
         # Queue does not exists, create one
         db.create_queue(user_id, chat_id, game_type)
-        q_msg = "You have joined a queue, please wait for other players to play"
+        q_msg = "You have joined a queue, please wait for other players to play.\nyou can type '/exit' to return."
         bot.send_message(chat_id, q_msg, parse_mode="Markdown")
 
 
 @bot.callback_query_handler(func=lambda call: True)
-def callback_query_for_move(call):
+def callback_query_for_move(call: telebot.types.CallbackQuery):
     user_id = call.from_user.id
     state = db.get_state_info_by_ID(user_id)
     logger.info(f"call: {call.message.chat.id} - state = {state}")
@@ -189,7 +202,7 @@ def help(message: telebot.types.Message):
 
     """
     bot.send_message(message.chat.id, help_str, parse_mode="Markdown")
-    utils.send_main_menu(message, bot)
+    utils.send_main_menu(message.chat.id, bot)
 
 
 @bot.message_handler(func=lambda m: True)

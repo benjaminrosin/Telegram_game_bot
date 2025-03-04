@@ -5,7 +5,7 @@ import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 import utils
 import db_connect as db
-import logging
+
 
 logging.basicConfig(
     format="[%(levelname)s %(asctime)s %(module)s:%(lineno)d] %(message)s",
@@ -17,14 +17,12 @@ logger = logging.getLogger(__name__)
 EMPTY = ' '
 X, O = 'X', 'O'  # noqa: E741
 WAIT_MSG = "Wait for your opponent's move"
-YOURES_MSG = "Your move!"
+YOURS_MSG = "Your move!"
 
 logging.basicConfig(
     format="[%(levelname)s %(asctime)s %(module)s:%(lineno)d] %(message)s",
     level=logging.INFO,
 )
-
-logger = logging.getLogger(__name__)
 
 bot = telebot.TeleBot(bot_secrets.TOKEN)
 
@@ -39,8 +37,10 @@ def get_keyboard(game_state: list[str]) -> telebot.types.InlineKeyboardMarkup:
 
     return keyboard
 
+
 def init_state():
     return [EMPTY] * 9
+
 
 def start(state):
     user1_id, user2_id = state["user_id_arr"]
@@ -48,7 +48,7 @@ def start(state):
     turn = state["turn"]
     msg = [None, None]
     m1 = bot.send_message(state["user_id_arr"][not turn], f"Game Started, {WAIT_MSG}", reply_markup=get_keyboard(state["state"]))
-    m2 = bot.send_message(state["user_id_arr"][turn], f"Game Started, {YOURES_MSG}", reply_markup=get_keyboard(state["state"]))
+    m2 = bot.send_message(state["user_id_arr"][turn], f"Game Started, {YOURS_MSG}", reply_markup=get_keyboard(state["state"]))
     msg[not turn] = m1.id
     msg[turn] = m2.id
     logger.info(f"m1: {m1}, m2: {m2} - {msg=} {turn=}")
@@ -70,6 +70,7 @@ def check_status(grid):
         if grid[2] == grid[4] == grid[6] != EMPTY:
             winner = grid[2]
     return winner
+
 
 def callback_query(call, state):
     turn = state["turn"]
@@ -100,14 +101,7 @@ def callback_query(call, state):
             bot.delete_message(call.message.chat.id, call.message.message_id)
             # TO DO
             utils.send_main_menu(call.message, bot)
-            '''
-            keyboard = InlineKeyboardMarkup()
-            keyboard.add(InlineKeyboardButton("Play a game", callback_data="Play"))
-            keyboard.add(InlineKeyboardButton("Settings", callback_data="Settings"))
-            keyboard.add(InlineKeyboardButton("LeaderBoards", callback_data="LeaderBoards"))
-            bot.send_message(call.message.chat.id, "Choose an option:", reply_markup=keyboard)'''
             return
-
 
     db.update_state_info(state["user_id_arr"][turn], {"state": tmp_state, "turn": int(1-turn)})
     logger.info(f"state after: {db.get_state_info_by_ID(state["user_id_arr"][turn])}")
@@ -115,12 +109,11 @@ def callback_query(call, state):
                     state["user_id_arr"][turn],
                             state["msg_id_arr"][turn],
                             reply_markup=get_keyboard(state["state"]))
-    bot.edit_message_text(YOURES_MSG,
+    bot.edit_message_text(YOURS_MSG,
                     state["user_id_arr"][not turn],
                             state["msg_id_arr"][not turn],
                             reply_markup=get_keyboard(state["state"]))
 
-    
     bot.answer_callback_query(call.id)
 
 

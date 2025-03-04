@@ -5,12 +5,20 @@ import bot_secrets
 import html
 import json
 import utils
+import db_connect as db
 
 bot = telebot.TeleBot(bot_secrets.TOKEN)
 
-# Store active trivia sessions: { user_id: { "question": "...", "correct": "..." } }
-trivia_sessions = {}
 trivia_cache = []  # Store pre-fetched questions
+
+
+def init_state():
+    return {
+            "question": '',
+            "correct": '',
+            "counter": 1,
+            "wrong": 0,
+        }
 
 
 def get_trivia_question() -> dict | None:
@@ -40,52 +48,38 @@ def create_keyboard(options: list) -> InlineKeyboardMarkup:
     return keyboard
 
 
-def start(message: telebot.types.Message):
+def start(state):
     """Start a trivia game by sending a question."""
-    user_id = message.chat.id
+    user_id = state["user_id_arr"][0]
     trivia_data = get_trivia_question()
 
     if trivia_data is None:
         bot.send_message(user_id, "⚠️ Sorry, I couldn't fetch a trivia question. Try again later!")
+        utils.send_main_menu(user_id, bot)
         return
 
-    question, correct, incorrect, category, difficulty = (
-        trivia_data["question"], trivia_data["correct_answer"], trivia_data["incorrect_answers"], trivia_data["category"],
-        trivia_data["difficulty"]
-    )
+    state["question"] = trivia_data["question"]
+    state["correct"] = trivia_data["correct_answer"]
 
-    options = incorrect + [correct]
+    options = [state["correct"]] + trivia_data["incorrect_answers"]
     random.shuffle(options)
 
-    if user_id in trivia_sessions:
-        trivia_sessions[user_id]["counter"] += 1
-        trivia_sessions[user_id]["question"] = question
-        trivia_sessions[user_id]["correct"] = correct
-        trivia_sessions[user_id]["category"] = category
-        trivia_sessions[user_id]["difficulty"] = difficulty
+    text = (f"🎯 *Category:* {trivia_data["category"]}\n"
+            f"💪 *Difficulty:* {trivia_data["difficulty"]}\n\n"
+            f"❓ *{state["question"]}*")
 
-    else:
-        trivia_sessions[user_id] = {
-            "question": question,
-            "correct": correct,
-            "category": category,
-            "difficulty": difficulty,
-            "counter": 1,
-            "wrong": 0
-        }
+    db.update_state_info(user_id, {"state": state})
 
-    text = f"🎯 *Category:* {category}\n💪 *Difficulty:* {difficulty}\n\n❓ *{question}*"
     bot.send_message(user_id, text, parse_mode="Markdown", reply_markup=create_keyboard(options))
 
-
-def callback_query(call: telebot.types.CallbackQuery):
+#p---------------------------------------------------------------------------------------------------------------------------
+# dont working
+#---------------------------------------------------------------------------------------------------------------------------------------------------
+def callback_query(call: telebot.types.CallbackQuery, state: dict):
     """Check the player's answer."""
     user_id = call.message.chat.id
-    if user_id not in trivia_sessions:
-        bot.answer_callback_query(call.id, "Start a new game with /trivia")
-        return
 
-    correct_answer = trivia_sessions[user_id]["correct"]
+    correct_answer = state["state"]["correct"]
     if call.data == correct_answer:
         bot.edit_message_text(f"✅ Correct! The answer is: {correct_answer}", user_id, call.message.message_id)
     else:
