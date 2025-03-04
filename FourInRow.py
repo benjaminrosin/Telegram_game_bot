@@ -9,17 +9,14 @@ import db_connect as db
 bot = telebot.TeleBot(bot_secrets.TOKEN)
 
 logger = logging.getLogger(__name__)
-
-EMPTY = ' '
-X, O = 'X', 'O'  # noqa: E741
-WAIT_MSG = "Wait for your opponent's move"
-YOURS_MSG = "Your move!"
-
 logging.basicConfig(
     format="[%(levelname)s %(asctime)s %(module)s:%(lineno)d] %(message)s",
     level=logging.INFO,
 )
 
+
+WAIT_MSG = "Wait for your opponent's move"
+YOURS_MSG = "Your move!"
 ROWS, COLS = 6, 7
 EMPTY, RED, YELLOW = "⚪", "🔴", "🟡"
 PIECES = ["🔴", "🟡"]
