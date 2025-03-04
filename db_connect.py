@@ -78,6 +78,8 @@ def delete_queue(user_id) -> None:
 ###
 #  STATE FUNCTIONS
 ###
+
+
 def create_state(user1_id: int, user2_id: int, game_type: str, state: object) -> dict:
     user1 = get_user_info("user_id", user1_id)
     user2 = get_user_info("user_id", user2_id)
