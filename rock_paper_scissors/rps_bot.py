@@ -45,6 +45,6 @@ def reset_state():
     pass
 
 
-logger.info("* starting bot")
-bot.infinity_polling()
-logger.info("* goodbye!")
+def about():
+    return ('⭕❌ * Rock Paper Scissors * ❌⭕\n'
+            '\n')

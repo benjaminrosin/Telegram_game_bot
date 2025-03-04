@@ -80,7 +80,7 @@ def scoreboard_callback_query(call):
     utils.send_main_menu(call.message, bot)
 
 
-@bot.callback_query_handler(func=lambda call: call.data == "Fetchers")
+@bot.callback_query_handler(func=lambda call: call.data == "Features")
 def fetchers_callback_query(call):
     utils.edit_selected_msg(call, bot)
 
