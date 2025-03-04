@@ -7,7 +7,7 @@ import FourInRow
 import Trivia
 import utils
 import emoji
-import rock_paper_scissors.rps_bot as Rps
+#import rock_paper_scissors.rps_bot as Rps
 
 logging.basicConfig(
     format="[%(levelname)s %(asctime)s %(module)s:%(lineno)d] %(message)s",
@@ -22,7 +22,7 @@ games = {
     "Tic-Tac-Toe": TicTacToe,
     "4-In-A-Row": FourInRow,
     "Trivia": Trivia,
-    "rock-paper-scissors": Rps,
+    #"rock-paper-scissors": Rps,
 }
 
 game = None

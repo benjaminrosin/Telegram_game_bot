@@ -1,7 +1,7 @@
 import telebot
 import bot_secrets
 import logging
-from rps_game import rps_game
+from rock_paper_scissors.rps_game import rps_game
 
 logging.basicConfig(
     format="[%(levelname)s %(asctime)s %(module)s:%(lineno)d] %(message)s",
