@@ -13,7 +13,6 @@ states_collection = db["states"]
 #  USER FUNCTIONS
 ###
 
-
 def create_user(user_id: int, chat_id: int, user_name: str, emoji: str) -> dict:
     new_user = {
         "user_id": user_id,
@@ -44,7 +43,6 @@ def update_user_info(user_id: int, update_fields: dict) -> dict:
     updated_user = users_collection.find_one(query)
     updated_user.pop("_id", None)
     return updated_user
-
 
 def delete_user(user_id: int) -> None:
     users_collection.delete_one({ "user_id": user_id })
@@ -77,12 +75,14 @@ def delete_queue(user_id) -> None:
 ###
 #  STATE FUNCTIONS
 ###
+
 def create_state(user1_id: int, user2_id: int, game_type: str, state: object) -> dict:
     user1 = get_user_info("user_id", user1_id)
     user2 = get_user_info("user_id", user2_id)
     new_state = {
         "user_id_arr": [user1["user_id"], user2["user_id"]],
         "chat_id_arr": [user1["chat_id"], user2["chat_id"]],
+
         "game_type": game_type,
         "turn": random.choice([0, 1]),
         "state": state
@@ -90,14 +90,12 @@ def create_state(user1_id: int, user2_id: int, game_type: str, state: object) ->
     states_collection.insert_one(new_state)
     return new_state
 
-
 def get_state_info(field_name: str, field_value) -> dict:
     query = {field_name: field_value}
     state = states_collection.find_one(query)
     if state:
         state.pop("_id", None)
     return state
-
 
 def update_state_info(user_id: int, update_fields: dict) -> dict:
     query = {"user_id_arr": { "$in": [user_id] } }
@@ -109,6 +107,10 @@ def update_state_info(user_id: int, update_fields: dict) -> dict:
     updated_state.pop("_id", None)
     return updated_state
 
-
 def delete_state(user_id: int) -> None:
     states_collection.delete_one({"user_id_arr": { "$in": [user_id] } })
+
+def is_single(user_id: int) -> bool:
+    query = { "user_id_arr": { "$in": [user_id] }}
+    state = get_state_info(query)
+    return (state["user_id_arr"][0] is None or state["user_id_arr"][1] is None)
