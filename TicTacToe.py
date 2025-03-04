@@ -32,7 +32,7 @@ def get_keyboard(game_state: list[str]) -> telebot.types.InlineKeyboardMarkup:
     return keyboard
 
 def start(message):
-    sent = bot.send_message(message.chat.id, "Choose an option:", reply_markup=get_keyboard(state))
+    bot.send_message(message.chat.id, "Choose an option:", reply_markup=get_keyboard(state))
 
 def check_status():
     winner: str = ""

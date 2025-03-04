@@ -57,12 +57,22 @@ def start(message: telebot.types.Message):
     options = incorrect + [correct]
     random.shuffle(options)
 
-    trivia_sessions[user_id] = {
-        "question": question,
-        "correct": correct,
-        "category": category,
-        "difficulty": difficulty
-    }
+    if user_id in trivia_sessions:
+        trivia_sessions[user_id]["counter"] += 1
+        trivia_sessions[user_id]["question"] = question
+        trivia_sessions[user_id]["correct"] = correct
+        trivia_sessions[user_id]["category"] = category
+        trivia_sessions[user_id]["difficulty"] = difficulty
+
+    else:
+        trivia_sessions[user_id] = {
+            "question": question,
+            "correct": correct,
+            "category": category,
+            "difficulty": difficulty,
+            "counter": 1,
+            "wrong": 0
+        }
 
     text = f"🎯 *Category:* {category}\n💪 *Difficulty:* {difficulty}\n\n❓ *{question}*"
     bot.send_message(user_id, text, parse_mode="Markdown", reply_markup=create_keyboard(options))
@@ -80,8 +90,14 @@ def callback_query(call: telebot.types.CallbackQuery):
         bot.edit_message_text(f"✅ Correct! The answer is: {correct_answer}", user_id, call.message.message_id)
     else:
         bot.edit_message_text(f"❌ Wrong! The correct answer was: {correct_answer}", user_id, call.message.message_id)
+        trivia_sessions[user_id]["wrong"] += 1
 
-    del trivia_sessions[user_id]  # Remove session after answering
+    if trivia_sessions[user_id]["counter"] == 5:
+        bot.send_message(call.message.chat.id, f"out of {trivia_sessions[user_id]["counter"]} questions you "
+                                               f"answered {trivia_sessions[user_id]["counter"] - trivia_sessions[user_id]["wrong"]} correctly.")
+        del trivia_sessions[user_id]  # Remove session after answering
+        utils.send_main_menu(call.message, bot)
+        return
 
     start(call.message)
 

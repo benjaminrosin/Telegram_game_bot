@@ -1,3 +1,5 @@
+import random
+
 import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 import bot_secrets
@@ -10,6 +12,10 @@ games = {}
 
 ROWS, COLS = 6, 7
 EMPTY, RED, YELLOW = "⚪", "🔴", "🟡"
+
+
+def random_move() -> int:
+    return random.randint(0, 8)
 
 
 def create_grid():
