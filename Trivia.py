@@ -85,7 +85,7 @@ def callback_query(call: telebot.types.CallbackQuery, state: dict):
 
     if state["state"]["counter"] == 5:
         bot.send_message(call.message.chat.id,
-                         f"🧠✅❌ * Summery * ❌✅🧠\n"
+                         f"🧠✅❌ * Summary * ❌✅🧠\n"
                          f"out of {state["state"]["counter"]} questions you "
                          f"answered {state["state"]["counter"] - state["state"]["wrong"]} correctly.",
                          parse_mode="Markdown")
