@@ -4,6 +4,7 @@ from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 import bot_secrets
 import html
 import json
+import utils
 
 bot = telebot.TeleBot(bot_secrets.TOKEN)
 

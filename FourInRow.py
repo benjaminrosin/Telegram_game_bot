@@ -1,7 +1,7 @@
 import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 import bot_secrets
-
+import utils
 
 bot = telebot.TeleBot(bot_secrets.TOKEN)
 
@@ -19,8 +19,8 @@ def create_grid():
 
 def format_grid(grid: list[list[str]]) -> str:
     """Convert grid to a string for Telegram messages."""
-    column_numbers = "1️⃣2️⃣3️⃣4️⃣5️⃣6️⃣7️⃣\n"
     grid_str = "\n".join("".join(row) for row in grid)
+    column_numbers = "1️⃣2️⃣3️⃣4️⃣5️⃣6️⃣7️⃣\n"
     return f"{grid_str}\n{column_numbers}"
 
 
@@ -81,7 +81,7 @@ def callback_query(call: telebot.types.CallbackQuery):
     """Handle player moves."""
     chat_id = call.message.chat.id
     if chat_id not in games:
-        bot.answer_callback_query(call.id, "Game not found. Start a new one with /start4inarow")
+        bot.answer_callback_query(call.id, "Game not found.")
         return
 
     game = games[chat_id]
@@ -94,11 +94,13 @@ def callback_query(call: telebot.types.CallbackQuery):
     if check_winner(game["grid"], game["turn"]):
         bot.edit_message_text(format_grid(game["grid"]) + f"\n\n🎉 {game['turn']} Wins!", chat_id, call.message.message_id)
         del games[chat_id]
+        utils.send_main_menu(call.message, bot)
         return
 
     if is_draw(game["grid"]):
         bot.edit_message_text(format_grid(game["grid"]) + "\n\n😲 It's a Draw!", chat_id, call.message.message_id)
         del games[chat_id]
+        utils.send_main_menu(call.message, bot)
         return
 
     # Switch turns
