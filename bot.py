@@ -29,6 +29,12 @@ games = {
 #single_player_games = ["rock-paper-scissors"]
 
 
+def check_register(message: telebot.types.Message):
+    user_id = message.from_user.id
+    user = db.get_user_info("user_id", user_id)
+    if not user:
+        db.create_user(user_id, message.chat.id, message.from_user.username, "o")
+
 @bot.message_handler(commands=["start", "exit"])
 def send_welcome(message: telebot.types.Message):
 
@@ -36,6 +42,7 @@ def send_welcome(message: telebot.types.Message):
     if text == "/start":
         logger.info(f"+ Start chat #{message.chat.id} from {message.chat.username}")
         bot.reply_to(message, "🤖 Welcome! 🤖")
+        check_register(message)
     else:  # text == "exit"
         bot.reply_to(message, "🤖 Hi again 🤖")
 
@@ -90,7 +97,6 @@ def fetchers_callback_query(call):
 
 
 # TO CHANGE
-# reset_state
 # init_state
 # start
 # callback_query
@@ -98,7 +104,7 @@ def fetchers_callback_query(call):
 @bot.callback_query_handler(func=lambda call: call.data in games.keys())
 def callback_query_for_choosing_game(call):
     game_type = call.data
-    user_id = call.message.from_user.id
+    user_id = call.from_user.id
     chat_id = call.message.chat.id
     # check if a queue exists
     queue = db.get_queue_info("game_type", game_type)
@@ -119,11 +125,13 @@ def callback_query_for_choosing_game(call):
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query_for_move(call):
-    user_id = call.message.from_user.id
-    state = db.get_state_info("user_id", user_id)
+    user_id = call.from_user.id
+    state = db.get_state_info_by_ID(user_id)
+    logger.info(f"call: {call.message.chat.id} - state = {state}")
     if state is not None:
         #is_single =  db.is_single(user_id) - Single-Player = True, Multi-Player = False
         game_type = state["game_type"]
+        #logger.info(f"game_type: {game_type}")
         curr_game = games[game_type] # current game module
         curr_game.callback_query(call, state)
 

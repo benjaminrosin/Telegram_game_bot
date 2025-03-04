@@ -2,10 +2,12 @@ import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 import urllib.parse
 import bot_secrets
+import db_connect
 
 
 def send_main_menu(message: telebot.types.Message, bot: telebot.TeleBot):
-    # mongo delete state if ex
+    db_connect.delete_queue(message.chat.id)
+    db_connect.delete_state(message.chat.id)
 
     share_message = f"Check out this awesome game bot!\nLet's play together: {bot_secrets.BOT_USERNAME}"
     encoded_share_message = urllib.parse.quote(share_message)

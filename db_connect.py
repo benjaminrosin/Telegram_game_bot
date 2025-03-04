@@ -1,6 +1,7 @@
 from pymongo import MongoClient
 
 import random
+import logging
 
 client = MongoClient("mongodb://localhost:27017/")
 db = client["not_a_db"]
@@ -8,6 +9,13 @@ db = client["not_a_db"]
 users_collection = db["users"]
 queues_collection = db["queues"]
 states_collection = db["states"]
+
+logging.basicConfig(
+    format="[%(levelname)s %(asctime)s %(module)s:%(lineno)d] %(message)s",
+    level=logging.INFO,
+)
+
+logger = logging.getLogger(__name__)
 
 ###
 #  USER FUNCTIONS
@@ -81,7 +89,6 @@ def create_state(user1_id: int, user2_id: int, game_type: str, state: object) ->
     user2 = get_user_info("user_id", user2_id)
     new_state = {
         "user_id_arr": [user1["user_id"], user2["user_id"]],
-        "chat_id_arr": [user1["chat_id"], user2["chat_id"]],
 
         "game_type": game_type,
         "turn": random.choice([0, 1]),
@@ -90,8 +97,8 @@ def create_state(user1_id: int, user2_id: int, game_type: str, state: object) ->
     states_collection.insert_one(new_state)
     return new_state
 
-def get_state_info(field_name: str, field_value) -> dict:
-    query = {field_name: field_value}
+def get_state_info_by_ID(user_id: int) -> dict:
+    query = {"user_id_arr": { "$in": [user_id] } }
     state = states_collection.find_one(query)
     if state:
         state.pop("_id", None)
@@ -101,6 +108,7 @@ def update_state_info(user_id: int, update_fields: dict) -> dict:
     query = {"user_id_arr": { "$in": [user_id] } }
     new_values = {"$set": update_fields}
     result = states_collection.update_one(query, new_values)
+    logger.info(f"match count: {result.matched_count}")
     if result.matched_count == 0:
         return None
     updated_state = states_collection.find_one(query)
@@ -112,5 +120,5 @@ def delete_state(user_id: int) -> None:
 
 def is_single(user_id: int) -> bool:
     query = { "user_id_arr": { "$in": [user_id] }}
-    state = get_state_info(query)
+    state = get_state_info_by_ID(query)
     return (state["user_id_arr"][0] is None or state["user_id_arr"][1] is None)
