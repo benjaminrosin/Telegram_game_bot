@@ -7,7 +7,7 @@ import FourInRow
 import Trivia
 import utils
 import emoji
-#import rock_paper_scissors.rps_bot as Rps
+import rock_paper_scissors.rps_bot as Rps
 
 logging.basicConfig(
     format="[%(levelname)s %(asctime)s %(module)s:%(lineno)d] %(message)s",
@@ -22,7 +22,7 @@ games = {
     "Tic-Tac-Toe": TicTacToe,
     "4-In-A-Row": FourInRow,
     "Trivia": Trivia,
-    #"rock-paper-scissors": Rps,
+    "rock-paper-scissors": Rps,
 }
 
 game = None
@@ -42,7 +42,6 @@ def send_welcome(message: telebot.types.Message):
         bot.reply_to(message, "🤖 Welcome! 🤖")
     else:  # text == "exit"
         bot.reply_to(message, "🤖 Hi again 🤖")
-
 
     utils.send_main_menu(message, bot)
 
@@ -74,10 +73,10 @@ def scoreboard_callback_query(call):
 
     scoreboard = "🏆 *Scoreboard* 🏆\n\n"
     for g in games:
-        top = ['a', 'b', 'c']  # use mongo to get them
-        scoreboard += '*{}*:\n🥇 *{}*\n🥈 *{}*\n🥉 *{}*\n\n'.format(g, *top)
+        top = ["a", "b", "c"]  # use mongo to get them
+        scoreboard += "*{}*:\n🥇 *{}*\n🥈 *{}*\n🥉 *{}*\n\n".format(g, *top)
 
-    bot.send_message(call.message.chat.id, scoreboard, parse_mode='Markdown')
+    bot.send_message(call.message.chat.id, scoreboard, parse_mode="Markdown")
     utils.send_main_menu(call.message, bot)
 
 
@@ -85,12 +84,12 @@ def scoreboard_callback_query(call):
 def fetchers_callback_query(call):
     utils.edit_selected_msg(call, bot)
 
-    msg = ''
+    msg = ""
     for g in games.values():
         msg += g.about()
-        msg += '\n\n'
+        msg += "\n\n"
 
-    bot.send_message(call.message.chat.id, msg, parse_mode='Markdown')
+    bot.send_message(call.message.chat.id, msg, parse_mode="Markdown")
     utils.send_main_menu(call.message, bot)
 
 
@@ -109,14 +108,20 @@ def callback_query_for_choosing_game(call):
 
 @bot.message_handler(commands=["rename"])
 def raname(message: telebot.types.Message):
-    logger.info(f"[#{message.chat.id}.{message.message_id} {message.chat.username!r}] {message.text!r}")
+    logger.info(
+        f"[#{message.chat.id}.{message.message_id} {message.chat.username!r}] {message.text!r}"
+    )
     arr = message.text.split()
     if len(arr) != 2:
-        bot.reply_to(message, "correct use:\n/rename <new_name>\nthe name cannot contain spaces")
+        bot.reply_to(
+            message, "correct use:\n/rename <new_name>\nthe name cannot contain spaces"
+        )
     else:
         bot.reply_to(message, f"you choose {arr[1]}")
-        logger.info(f"[#{message.chat.id}.{message.message_id} {message.chat.username!r}] {message.text!r}")
-        print('update DB')
+        logger.info(
+            f"[#{message.chat.id}.{message.message_id} {message.chat.username!r}] {message.text!r}"
+        )
+        print("update DB")
 
 
 def is_emoji(s: str) -> bool:
@@ -125,19 +130,23 @@ def is_emoji(s: str) -> bool:
 
 @bot.message_handler(commands=["reemoji"])
 def reemoji(message: telebot.types.Message):
-    logger.info(f"[#{message.chat.id}.{message.message_id} {message.chat.username!r}] {message.text!r}")
+    logger.info(
+        f"[#{message.chat.id}.{message.message_id} {message.chat.username!r}] {message.text!r}"
+    )
     arr = message.text.split()
     if len(arr) != 2 or not is_emoji(arr[1]):
         bot.reply_to(message, "correct use:\n/reemoji <new_emoji>")
     else:
         bot.reply_to(message, f"you choose {arr[1]}")
-        logger.info(f"[#{message.chat.id}.{message.message_id} {message.chat.username!r}] {message.text!r}")
-        print('update DB')
+        logger.info(
+            f"[#{message.chat.id}.{message.message_id} {message.chat.username!r}] {message.text!r}"
+        )
+        print("update DB")
 
 
 @bot.message_handler(commands=["help", "h"])
 def help(message: telebot.types.Message):
-    help_str = '''
+    help_str = """
 🤖 *Bot Commands Help*:
 
 🎮 *Game Commands*:
@@ -149,7 +158,7 @@ def help(message: telebot.types.Message):
 - `/rename <new_name>` - Change your username in the game
 - `/reemoji <emoji>` - Change your game emoji
 
-    '''
+    """
     bot.send_message(message.chat.id, help_str, parse_mode="Markdown")
     utils.send_main_menu(message, bot)
 
