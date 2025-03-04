@@ -58,23 +58,21 @@ def start(state):
         utils.send_main_menu(user_id, bot)
         return
 
-    state["question"] = trivia_data["question"]
-    state["correct"] = trivia_data["correct_answer"]
+    state["state"]["question"] = trivia_data["question"]
+    state["state"]["correct"] = trivia_data["correct_answer"]
 
-    options = [state["correct"]] + trivia_data["incorrect_answers"]
+    options = [state["state"]["correct"]] + trivia_data["incorrect_answers"]
     random.shuffle(options)
 
     text = (f"🎯 *Category:* {trivia_data["category"]}\n"
             f"💪 *Difficulty:* {trivia_data["difficulty"]}\n\n"
-            f"❓ *{state["question"]}*")
+            f"❓ *{state["state"]["question"]}*")
 
-    db.update_state_info(user_id, {"state": state})
+    db.update_state_info(user_id, {"state": state["state"]})
 
     bot.send_message(user_id, text, parse_mode="Markdown", reply_markup=create_keyboard(options))
 
-#p---------------------------------------------------------------------------------------------------------------------------
-# dont working
-#---------------------------------------------------------------------------------------------------------------------------------------------------
+
 def callback_query(call: telebot.types.CallbackQuery, state: dict):
     """Check the player's answer."""
     user_id = call.message.chat.id
@@ -84,16 +82,21 @@ def callback_query(call: telebot.types.CallbackQuery, state: dict):
         bot.edit_message_text(f"✅ Correct! The answer is: {correct_answer}", user_id, call.message.message_id)
     else:
         bot.edit_message_text(f"❌ Wrong! The correct answer was: {correct_answer}", user_id, call.message.message_id)
-        trivia_sessions[user_id]["wrong"] += 1
+        state["state"]["wrong"] += 1
 
-    if trivia_sessions[user_id]["counter"] == 5:
-        bot.send_message(call.message.chat.id, f"out of {trivia_sessions[user_id]["counter"]} questions you "
-                                               f"answered {trivia_sessions[user_id]["counter"] - trivia_sessions[user_id]["wrong"]} correctly.")
-        del trivia_sessions[user_id]  # Remove session after answering
-        utils.send_main_menu(call.message, bot)
+    if state["state"]["counter"] == 5:
+        bot.send_message(call.message.chat.id,
+                         f"✅❌ *Summery* ❌✅\n"
+                         f"out of {state["state"]["counter"]} questions you "
+                         f"answered {state["state"]["counter"] - state["state"]["wrong"]} correctly.",
+                         parse_mode="Markdown")
+        utils.send_main_menu(user_id, bot)
         return
 
-    start(call.message)
+    state["state"]["counter"] += 1
+
+    db.update_state_info(user_id, {"state": state["state"]})
+    start(state)
 
 
 def reset_state():

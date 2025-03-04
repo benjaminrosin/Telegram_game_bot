@@ -115,7 +115,7 @@ def callback_query_for_choosing_game(call: telebot.types.CallbackQuery):
 
     if game_type == "Trivia":
         state_in_game = games[game_type].init_state()
-        state = db.create_state(user_id, 0, game_type, state_in_game)
+        state = db.create_state(user_id, user_id, game_type, state_in_game)
         games[game_type].start(state)
         return
 
