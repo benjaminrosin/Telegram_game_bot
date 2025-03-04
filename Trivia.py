@@ -4,6 +4,7 @@ from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 import bot_secrets
 import html
 import json
+import utils
 
 bot = telebot.TeleBot(bot_secrets.TOKEN)
 
@@ -90,4 +91,9 @@ def reset_state():
     # delete from cache
     print("skipping trivia reset")
 
+
+def about():
+    return ('🧠 * Trivia Challenge * 🧠\n'
+            'Answer questions, and compete for the top spot! 🏆\n'
+            "Ready to prove you're the ultimate trivia master? 🎯🎉")
 
