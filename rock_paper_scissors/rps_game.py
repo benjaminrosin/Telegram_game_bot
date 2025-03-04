@@ -1,19 +1,22 @@
 from random import randrange
 
 
-def rps_game(player_choice):
-    suggestions = ["✂️", "📄", "🧱"]
-
-    bot_choice = suggestions[randrange(0, 3)]
-
-    if bot_choice == player_choice:
-        result = f"{bot_choice} \ntie"
+def rps_game(player_choice, oponnent_choice=None):
+    if oponnent_choice is None:
+        oponnent_choice = computer_choice()
+    if oponnent_choice == player_choice:
+        result = f"{oponnent_choice} \ntie"
     elif (
-        (bot_choice == "✂️" and player_choice == "📄")
-        or (bot_choice == "🧱" and player_choice == "✂️")
-        or (bot_choice == "📄" and player_choice == "🧱")
+        (oponnent_choice == "✂️" and player_choice == "📄")
+        or (oponnent_choice == "🧱" and player_choice == "✂️")
+        or (oponnent_choice == "📄" and player_choice == "🧱")
     ):
-        result = f"{bot_choice} \nYou Lose, Bot Wins"
+        result = f"{oponnent_choice} \nYou Lose, Bot Wins"
     else:
-        result = f"{bot_choice} \nYou win, Bot loses"
+        result = f"{oponnent_choice} \nYou win, Bot loses"
     return result
+
+
+def computer_choice():
+    suggestions = ["✂️", "📄", "🧱"]
+    return suggestions[randrange(0, 3)]
