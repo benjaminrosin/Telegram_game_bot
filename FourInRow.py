@@ -14,13 +14,17 @@ ROWS, COLS = 6, 7
 EMPTY, RED, YELLOW = "⚪", "🔴", "🟡"
 
 
+def init_state() -> list[list[str]]:
+    return [[EMPTY] * COLS for _ in range(ROWS)]
+
+
 def random_move() -> int:
     return random.randint(0, 8)
 
 
-def create_grid():
-    """Initialize an empty grid."""
-    return [[EMPTY] * COLS for _ in range(ROWS)]
+#def create_grid():
+#    """Initialize an empty grid."""
+#    return [[EMPTY] * COLS for _ in range(ROWS)]
 
 
 def format_grid(grid: list[list[str]]) -> str:
@@ -112,12 +116,6 @@ def callback_query(call: telebot.types.CallbackQuery):
     # Switch turns
     game["turn"] = YELLOW if game["turn"] == RED else RED
     bot.edit_message_text(format_grid(game["grid"]), chat_id, call.message.message_id, reply_markup=create_keyboard())
-
-
-def reset_state():
-    #del games[chat_id]
-    # delete from cache
-    print("skipping 4 in row reset")
 
 
 def about():

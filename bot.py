@@ -107,9 +107,9 @@ def callback_query_for_choosing_game(call):
         other_user_id = queue["user_id"]
         # Queue exists, delete it and create a new game
         db.delete_queue(other_user_id)
-        state = games[game_type].init_state()
-        db.create_state(user_id, other_user_id, game_type, state)
-        games[game_type].start()
+        state_in_game = games[game_type].init_state()
+        state = db.create_state(user_id, other_user_id, game_type, state_in_game)
+        games[game_type].start(state)
     else:
         # Queue does not exists, create one
         db.create_queue(user_id, chat_id, game_type)
