@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 bot = telebot.TeleBot(bot_secrets.TOKEN)
 
 
-@bot.message_handler(commands=["start"])
 def start(message: telebot.types.Message):
     send_rps_buttons(message.chat.id)
 
@@ -28,7 +27,6 @@ def send_rps_buttons(chat_id):
     bot.send_message(chat_id=chat_id, text="Choose your move:", reply_markup=markup)
 
 
-# @bot.callback_query_handler(func=lambda call: call.data in ["🧱", "📄", "✂️"])
 def callback_query(call: telebot.types.CallbackQuery):
     user_choice = call.data
     bot_choice = rps_game(user_choice)
