@@ -5,7 +5,7 @@ import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 import utils
 import db_connect as db
-import logging
+import logging  # noqa: F811
 
 logging.basicConfig(
     format="[%(levelname)s %(asctime)s %(module)s:%(lineno)d] %(message)s",
@@ -15,7 +15,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 EMPTY = ' '
-X, O = 'X', 'O'  # noqa: E741
 WAIT_MSG = "Wait for your opponent's move"
 YOURES_MSG = "Your move!"
 
@@ -43,16 +42,18 @@ def init_state():
     return [EMPTY] * 9
 
 def start(state):
-    user1_id, user2_id = state["user_id_arr"]
-
+    users = state["user_id_arr"]
     turn = state["turn"]
+    this_username = db.get_user_info("user_id", users[turn])["user_name"]
+    other_username = db.get_user_info("user_id", users[1 - turn])["user_name"]
+
+   
     msg = [None, None]
-    m1 = bot.send_message(state["user_id_arr"][not turn], f"Game Started, {WAIT_MSG}", reply_markup=get_keyboard(state["state"]))
-    m2 = bot.send_message(state["user_id_arr"][turn], f"Game Started, {YOURES_MSG}", reply_markup=get_keyboard(state["state"]))
+    m1 = bot.send_message(state["user_id_arr"][not turn], f"You are playing against: {this_username}\nGame Started, " + WAIT_MSG, reply_markup=get_keyboard(state["state"]))
+    m2 = bot.send_message(state["user_id_arr"][turn], f"You are playing against: {other_username}\nGame Started, " + YOURES_MSG, reply_markup=get_keyboard(state["state"]))
     msg[not turn] = m1.id
     msg[turn] = m2.id
-    logger.info(f"m1: {m1}, m2: {m2} - {msg=} {turn=}")
-    db.update_state_info(user1_id, {"msg_id_arr": msg})
+    db.update_state_info(users[0], {"msg_id_arr": msg})
 
 
 def check_status(grid):
@@ -73,7 +74,9 @@ def check_status(grid):
 
 def callback_query(call, state):
     turn = state["turn"]
-    if call.from_user.id != state["user_id_arr"][turn]:
+    this_id, other_id = state["user_id_arr"][turn], state["user_id_arr"][1 - turn]
+    this_msg_id, other_msg_id = state["msg_id_arr"][turn], state["msg_id_arr"][1 - turn]
+    if call.from_user.id != this_id:
         bot.answer_callback_query(call.id, "It's not your turn")
         return
     # right player
@@ -84,33 +87,27 @@ def callback_query(call, state):
         bot.answer_callback_query(call.id, "Not a legal move")
         return
     else:
-        if not turn:
-            tmp_state[pos] = X
-        else:
-            tmp_state[pos] = O
-        if (w := check_status(tmp_state)) != "":
-            #blaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-            bot.send_message(call.message.chat.id, f"{w} WON !!!")
+        ch = db.getEmoji(this_id)
+        tmp_state[pos] = ch
+
+        if (w := check_status(tmp_state)) != "":  # noqa: F841
+            bot.edit_message_text("You Won :)", this_id, this_msg_id, InlineKeyboardMarkup())
+            bot.edit_message_text("You Lost :(", other_id, other_msg_id, InlineKeyboardMarkup())
+            db.inc_score(this_id, 7, state["game_type"])
             over = True
         elif tmp_state.count(EMPTY) == 0:
-            bot.send_message(call.message.chat.id, "DRAW !!!")
+            bot.edit_message_text("Draw :|", this_id, this_msg_id, InlineKeyboardMarkup())
+            bot.edit_message_text("Draw :|", other_id, other_msg_id, InlineKeyboardMarkup())
+            db.inc_score(this_id, 3, state["game_type"])
+            db.inc_score(other_id, 3, state["game_type"])
             over = True
-        
         if over:
-            bot.delete_message(call.message.chat.id, call.message.message_id)
-            # TO DO
-            utils.send_main_menu(call.message, bot)
-            '''
-            keyboard = InlineKeyboardMarkup()
-            keyboard.add(InlineKeyboardButton("Play a game", callback_data="Play"))
-            keyboard.add(InlineKeyboardButton("Settings", callback_data="Settings"))
-            keyboard.add(InlineKeyboardButton("LeaderBoards", callback_data="LeaderBoards"))
-            bot.send_message(call.message.chat.id, "Choose an option:", reply_markup=keyboard)'''
+            utils.send_main_menu(call.message.chat.id, bot)
+            utils.send_main_menu(other_id, bot)
             return
 
-    
     db.update_state_info(state["user_id_arr"][turn], {"state": tmp_state, "turn": int(1-turn)})
-    logger.info(f"state after: {db.get_state_info_by_ID(state["user_id_arr"][turn])}")
+    
     bot.edit_message_text(WAIT_MSG,
                     state["user_id_arr"][turn],
                             state["msg_id_arr"][turn],
@@ -125,6 +122,6 @@ def callback_query(call, state):
 
 
 def about():
-    return ('⭕❌ * Tic Tec Toe * ❌⭕\n'
+    return ('⭕❌ * Tic Tac Toe * ❌⭕\n'
             'Think fast, line up three, and claim victory! 🏆\n'
             'Are you ready to outsmart your opponent? 🎯🔥')

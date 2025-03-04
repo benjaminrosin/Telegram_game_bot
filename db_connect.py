@@ -27,10 +27,11 @@ def create_user(user_id: int, chat_id: int, user_name: str, emoji: str) -> dict:
         "chat_id": chat_id,
         "user_name": user_name,
         "emoji": emoji,
-        "total_games": 0,
-        "score": 0,
-        "wins": 0,
-        "winrate": 0
+        "score": {
+            "Tic-Tac-Toe": 0,
+            "4-In-A-Row": 0,
+            "Trivia": 0,
+        }
     }
     users_collection.insert_one(new_user)
     return new_user
@@ -54,6 +55,28 @@ def update_user_info(user_id: int, update_fields: dict) -> dict:
 
 def delete_user(user_id: int) -> None:
     users_collection.delete_one({ "user_id": user_id })
+
+def inc_score(user_id: int, add: int, game_type: str) -> None:
+    user = get_user_info("user_id", user_id)
+    if not user:
+        return
+    orig = user["score"].get(game_type, 0)
+    new_score = orig + add
+
+    update_user_info(user_id, {f"score.{game_type}": new_score})
+
+def getEmoji(user_id: int) -> str:
+    user = get_user_info("user_id", user_id)
+    return user["emoji"]
+
+def get_top_scorers(game_type: str, top_n: int = 3) -> list:
+    top_players = users_collection.find(
+        {f"score.{game_type}": {"$exists": True}},
+        {"user_name": 1, f"score.{game_type}": 1, "_id": 0}
+    ).sort(f"score.{game_type}", -1).limit(top_n)
+
+    return [f"{player['user_name']} - {player['score'][game_type]}" for player in top_players]
+
 
 
 ###
@@ -108,7 +131,6 @@ def update_state_info(user_id: int, update_fields: dict) -> dict:
     query = {"user_id_arr": { "$in": [user_id] } }
     new_values = {"$set": update_fields}
     result = states_collection.update_one(query, new_values)
-    logger.info(f"match count: {result.matched_count}")
     if result.matched_count == 0:
         return None
     updated_state = states_collection.find_one(query)
