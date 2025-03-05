@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 #  USER FUNCTIONS
 ###
 
+
 def create_user(user_id: int, chat_id: int, user_name: str, emoji: str) -> dict:
     new_user = {
         "user_id": user_id,
@@ -31,10 +32,12 @@ def create_user(user_id: int, chat_id: int, user_name: str, emoji: str) -> dict:
             "Tic-Tac-Toe": 0,
             "4-In-A-Row": 0,
             "Trivia": 0,
+            "rock-paper-scissors": 0,
         }
     }
     users_collection.insert_one(new_user)
     return new_user
+
 
 def get_user_info(field_name: str, field_value) -> dict:
     query = {field_name: field_value}
@@ -53,8 +56,10 @@ def update_user_info(user_id: int, update_fields: dict) -> dict:
     updated_user.pop("_id", None)
     return updated_user
 
+
 def delete_user(user_id: int) -> None:
     users_collection.delete_one({ "user_id": user_id })
+
 
 def inc_score(user_id: int, add: int, game_type: str) -> None:
     user = get_user_info("user_id", user_id)
@@ -65,9 +70,11 @@ def inc_score(user_id: int, add: int, game_type: str) -> None:
 
     update_user_info(user_id, {f"score.{game_type}": new_score})
 
+
 def getEmoji(user_id: int) -> str:
     user = get_user_info("user_id", user_id)
     return user["emoji"]
+
 
 def get_top_scorers(game_type: str, top_n: int = 3) -> list:
     top_players = users_collection.find(
@@ -92,12 +99,14 @@ def create_queue(user_id, chat_id, game_type) -> dict:
     queues_collection.insert_one(new_queue)
     return new_queue
 
+
 def get_queue_info(field_name: str, field_value) -> dict:
     query = { field_name: field_value }
     queue = queues_collection.find_one(query)
     if queue:
         queue.pop("_id", None)
     return queue
+
 
 def delete_queue(user_id) -> None:
     queues_collection.delete_one({ "user_id": user_id })

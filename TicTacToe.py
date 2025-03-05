@@ -50,7 +50,7 @@ def start(state):
 
     msg = [None, None]
     m1 = bot.send_message(state["user_id_arr"][not turn], f"You are playing against: {this_username}\nGame Started, " + WAIT_MSG, reply_markup=get_keyboard(state["state"]))
-    m2 = bot.send_message(state["user_id_arr"][turn], f"You are playing against: {other_username}\nGame Started, " + YOURES_MSG, reply_markup=get_keyboard(state["state"]))
+    m2 = bot.send_message(state["user_id_arr"][turn], f"You are playing against: {other_username}\nGame Started, " + YOURS_MSG, reply_markup=get_keyboard(state["state"]))
     msg[not turn] = m1.id
     msg[turn] = m2.id
     db.update_state_info(users[0], {"msg_id_arr": msg})
