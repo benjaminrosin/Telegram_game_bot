@@ -16,10 +16,6 @@ logger = logging.getLogger(__name__)
 bot = telebot.TeleBot(bot_secrets.TOKEN)
 
 
-WAIT_MSG = "Wait for your opponent's move"
-YOURES_MSG = "Your move!"
-
-
 def init_state():
     return ["", ""]
 
@@ -33,7 +29,7 @@ def start(state):
             (
                 bot.send_message(
                     state["user_id_arr"][i],
-                    f"Game Started, {WAIT_MSG}",
+                    "Game Started, choose your move",
                     reply_markup=get_rps_buttons(),
                 ).id
             )
@@ -55,7 +51,6 @@ def get_rps_buttons() -> telebot.types.InlineKeyboardMarkup:
 
 def check_winner(choices):
     result = rps_game(choices)
-    print("###############", result)
     if result == 0:
         response = "It's a tie!"
     elif result == 1:
@@ -89,21 +84,21 @@ def callback_query(call: telebot.types.CallbackQuery, state):
                     state["msg_id_arr"][i],
                     reply_markup=telebot.types.InlineKeyboardMarkup(),
                 )
-                # db.inc_score(state["user_id_arr"][i], 3, state["game_type"])
+                db.inc_score(state["user_id_arr"][i], 3, state["game_type"])
                 utils.send_main_menu(state["user_id_arr"][i], bot)
 
         else:
             bot.edit_message_text(
-                "hgcfvhvhjvhkjvhjvjhvhjvje",
+                f"player {db.get_user_info('user_id', ['user_id_arr'][index])['user_name']} won! player {db.get_user_info('user_id', ['user_id_arr'][not index])['user_name']} lost! ",
                 state["user_id_arr"][index],
                 state["msg_id_arr"][index],
                 reply_markup=telebot.types.InlineKeyboardMarkup(),
             )
-            # db.inc_score(state["user_id_arr"][index], 7, state["game_type"])
+            db.inc_score(state["user_id_arr"][index], 7, state["game_type"])
             utils.send_main_menu(state["user_id_arr"][index], bot)
 
             bot.edit_message_text(
-                "hgcfvhvhjvhkjvhjvjhvhjvje",
+                f"player {db.get_user_info('user_id', ['user_id_arr'][index])['user_name']} won! player {db.get_user_info('user_id', ['user_id_arr'][not index])['user_name']} lost! ",
                 state["user_id_arr"][not index],
                 state["msg_id_arr"][not index],
                 reply_markup=telebot.types.InlineKeyboardMarkup(),
