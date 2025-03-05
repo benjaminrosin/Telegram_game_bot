@@ -4,12 +4,19 @@ import bot_secrets
 import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 import utils
+import db_connect as db
+import logging  # noqa: F811
+
+logging.basicConfig(
+    format="[%(levelname)s %(asctime)s %(module)s:%(lineno)d] %(message)s",
+    level=logging.INFO,
+)
+
+logger = logging.getLogger(__name__)
 
 EMPTY = ' '
-X = 'X'
-O = 'O'
-turn = False
-state = [EMPTY] * 9
+WAIT_MSG = "Wait for your opponent's move"
+YOURES_MSG = "Your move!"
 
 logging.basicConfig(
     format="[%(levelname)s %(asctime)s %(module)s:%(lineno)d] %(message)s",
@@ -31,73 +38,90 @@ def get_keyboard(game_state: list[str]) -> telebot.types.InlineKeyboardMarkup:
 
     return keyboard
 
-def start(message):
-    sent = bot.send_message(message.chat.id, "Choose an option:", reply_markup=get_keyboard(state))
+def init_state():
+    return [EMPTY] * 9
 
-def check_status():
+def start(state):
+    users = state["user_id_arr"]
+    turn = state["turn"]
+    this_username = db.get_user_info("user_id", users[turn])["user_name"]
+    other_username = db.get_user_info("user_id", users[1 - turn])["user_name"]
+
+   
+    msg = [None, None]
+    m1 = bot.send_message(state["user_id_arr"][not turn], f"You are playing against: {this_username}\nGame Started, " + WAIT_MSG, reply_markup=get_keyboard(state["state"]))
+    m2 = bot.send_message(state["user_id_arr"][turn], f"You are playing against: {other_username}\nGame Started, " + YOURES_MSG, reply_markup=get_keyboard(state["state"]))
+    msg[not turn] = m1.id
+    msg[turn] = m2.id
+    db.update_state_info(users[0], {"msg_id_arr": msg})
+
+
+def check_status(grid):
     winner: str = ""
     for i in range(3):
-        if state[3*i] == state[3*i + 1] == state[3*i + 2] != EMPTY:
-            winner = state[3*i]
+        if grid[3*i] == grid[3*i + 1] == grid[3*i + 2] != EMPTY:
+            winner = grid[3*i]
             break
-        if state[i] == state[i + 3] == state[i + 6] != EMPTY:
-            winner = state[i]
+        if grid[i] == grid[i + 3] == grid[i + 6] != EMPTY:
+            winner = grid[i]
             break
     if winner == "":
-        if state[0] == state[4] == state[8] != EMPTY:
-            winner = state[0][0]
-        if state[2] == state[4] == state[6] != EMPTY:
-            winner = state[2]
+        if grid[0] == grid[4] == grid[8] != EMPTY:
+            winner = grid[0][0]
+        if grid[2] == grid[4] == grid[6] != EMPTY:
+            winner = grid[2]
     return winner
-    
-def reset_state():
-    global turn, state
-    turn = False
-    state = [EMPTY] * 9
 
-def callback_query(call):
-    global turn
+def callback_query(call, state):
+    turn = state["turn"]
+    this_id, other_id = state["user_id_arr"][turn], state["user_id_arr"][1 - turn]
+    this_msg_id, other_msg_id = state["msg_id_arr"][turn], state["msg_id_arr"][1 - turn]
+    if call.from_user.id != this_id:
+        bot.answer_callback_query(call.id, "It's not your turn")
+        return
+    # right player
     pos = int(call.data)
     over = False
-    if state[pos] != EMPTY:
+    tmp_state = state["state"]
+    if tmp_state[pos] != EMPTY:
         bot.answer_callback_query(call.id, "Not a legal move")
         return
     else:
-        if not turn:
-            state[pos] = X
-        else:
-            state[pos] = O
-        turn = not turn
-        if (w := check_status()) != "":
-            bot.send_message(call.message.chat.id, f"{w} WON !!!")
+        ch = db.getEmoji(this_id)
+        tmp_state[pos] = ch
+
+        if (w := check_status(tmp_state)) != "":  # noqa: F841
+            bot.edit_message_text("You Won :)", this_id, this_msg_id, InlineKeyboardMarkup())
+            bot.edit_message_text("You Lost :(", other_id, other_msg_id, InlineKeyboardMarkup())
+            db.inc_score(this_id, 7, state["game_type"])
             over = True
-        elif state.count(EMPTY) == 0:
-            bot.send_message(call.message.chat.id, "DRAW !!!")
+        elif tmp_state.count(EMPTY) == 0:
+            bot.edit_message_text("Draw :|", this_id, this_msg_id, InlineKeyboardMarkup())
+            bot.edit_message_text("Draw :|", other_id, other_msg_id, InlineKeyboardMarkup())
+            db.inc_score(this_id, 3, state["game_type"])
+            db.inc_score(other_id, 3, state["game_type"])
             over = True
-        
         if over:
-            bot.delete_message(call.message.chat.id, call.message.message_id)
-            reset_state()
-            utils.send_main_menu(call.message, bot)
-            '''
-            keyboard = InlineKeyboardMarkup()
-            keyboard.add(InlineKeyboardButton("Play a game", callback_data="Play"))
-            keyboard.add(InlineKeyboardButton("Settings", callback_data="Settings"))
-            keyboard.add(InlineKeyboardButton("LeaderBoards", callback_data="LeaderBoards"))
-            bot.send_message(call.message.chat.id, "Choose an option:", reply_markup=keyboard)'''
+            utils.send_main_menu(call.message.chat.id, bot)
+            utils.send_main_menu(other_id, bot)
             return
 
-    #bot.delete_message(call.message.chat.id, call.message.message_id)
-    #start(call.message)
+    db.update_state_info(state["user_id_arr"][turn], {"state": tmp_state, "turn": int(1-turn)})
+    
+    bot.edit_message_text(WAIT_MSG,
+                    state["user_id_arr"][turn],
+                            state["msg_id_arr"][turn],
+                            reply_markup=get_keyboard(state["state"]))
+    bot.edit_message_text(YOURES_MSG,
+                    state["user_id_arr"][not turn],
+                            state["msg_id_arr"][not turn],
+                            reply_markup=get_keyboard(state["state"]))
 
-    bot.edit_message_reply_markup(call.message.chat.id,
-                                  call.message.message_id,
-                                  reply_markup=get_keyboard(state))
     
     bot.answer_callback_query(call.id)
 
 
 def about():
-    return ('⭕❌ * Tic Tec Toe * ❌⭕\n'
+    return ('⭕❌ * Tic Tac Toe * ❌⭕\n'
             'Think fast, line up three, and claim victory! 🏆\n'
             'Are you ready to outsmart your opponent? 🎯🔥')
