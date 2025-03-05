@@ -106,6 +106,7 @@ def reset_state():
 
 def about():
     return ('🧠 * Trivia Challenge * 🧠\n'
+            ' - single player game\n'
             'Answer questions, and compete for the top spot! 🏆\n'
             "Ready to prove you're the ultimate trivia master? 🎯🎉")
 

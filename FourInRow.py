@@ -153,5 +153,6 @@ def callback_query(call: telebot.types.CallbackQuery, state: dict):
 
 def about():
     return ('🔴🟡 * 4 in a Row * 🟡🔴\n'
+            ' - duel game\n'
             'Drop your pieces, connect four, and outplay your opponent! 🏆\n'
             'Think ahead, block their moves, and claim victory! 🎯🔥')

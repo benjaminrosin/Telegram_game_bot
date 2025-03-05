@@ -119,5 +119,6 @@ def callback_query(call, state):
 
 def about():
     return ('⭕❌ * Tic Tec Toe * ❌⭕\n'
+            ' - duel game\n'
             'Think fast, line up three, and claim victory! 🏆\n'
             'Are you ready to outsmart your opponent? 🎯🔥')
