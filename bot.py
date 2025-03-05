@@ -9,7 +9,8 @@ import utils
 import emoji
 import db_connect as db
 import random
-#import rock_paper_scissors.rps_bot as Rps
+import rock_paper_scissors.rps_bot as Rps
+
 
 logging.basicConfig(
     format="[%(levelname)s %(asctime)s %(module)s:%(lineno)d] %(message)s",
@@ -24,7 +25,7 @@ games = {
     "Tic-Tac-Toe": TicTacToe,
     "4-In-A-Row": FourInRow,
     "Trivia": Trivia,
-    #"rock-paper-scissors": Rps,
+    "rock-paper-scissors": Rps,
 }
 
 #single_player_games = ["rock-paper-scissors"]
@@ -88,10 +89,10 @@ def scoreboard_callback_query(call):
 def fetchers_callback_query(call):
     utils.edit_selected_msg(call, bot)
 
-    msg = ''
+    msg = ""
     for g in games.values():
         msg += g.about()
-        msg += '\n\n'
+        msg += "\n\n"
 
     bot.send_message(call.message.chat.id, msg, parse_mode='Markdown')
     utils.send_main_menu(call.message.chat.id, bot)
@@ -145,7 +146,9 @@ def help(message: telebot.types.Message):
 # TO CHANGE - DONE
 @bot.message_handler(commands=["rename"])
 def raname(message: telebot.types.Message):
-    logger.info(f"[#{message.chat.id}.{message.message_id} {message.chat.username!r}] {message.text!r}")
+    logger.info(
+        f"[#{message.chat.id}.{message.message_id} {message.chat.username!r}] {message.text!r}"
+    )
     arr = message.text.split()
     if len(arr) != 2:
         bot.reply_to(message, "correct use:\n/rename <new_name>\nthe name cannot contain spaces")
@@ -155,8 +158,6 @@ def raname(message: telebot.types.Message):
         #print('update DB')
         db.update_user_info(message.chat.id, { "user_name": arr[1] })
 
-
-
 def is_emoji(s: str) -> bool:
     return s in emoji.EMOJI_DATA
 
@@ -164,7 +165,9 @@ def is_emoji(s: str) -> bool:
 # TO CHANGE - DONE
 @bot.message_handler(commands=["reemoji"])
 def reemoji(message: telebot.types.Message):
-    logger.info(f"[#{message.chat.id}.{message.message_id} {message.chat.username!r}] {message.text!r}")
+    logger.info(
+        f"[#{message.chat.id}.{message.message_id} {message.chat.username!r}] {message.text!r}"
+    )
     arr = message.text.split()
     if len(arr) != 2 or not is_emoji(arr[1]):
         bot.reply_to(message, "correct use:\n/reemoji <new_emoji>")
@@ -187,7 +190,6 @@ def callback_query_for_move(call):
 
     # ask what to send
     # utils.edit_selected_msg(call, bot)
-
 
 @bot.message_handler(func=lambda m: True)
 def echo_all(message: telebot.types.Message):
