@@ -45,6 +45,9 @@ def reset_state():
     pass
 
 
-logger.info("* starting bot")
-bot.infinity_polling()
-logger.info("* goodbye!")
+def about():
+    return ('🪨✂️📜 * Rock Paper Scissors * 📜✂️🪨\n'
+            ' - duel game\n'
+            'the ultimate battle of chance! Choose rock (🪨) to crush scissors, '
+            'scissors (✂️) to cut paper, or paper (📜) to cover rock. '
+            'Think fast, play smart, and outwit your opponent in this timeless showdown! 🎮🔥')

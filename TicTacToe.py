@@ -5,7 +5,7 @@ import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 import utils
 import db_connect as db
-import logging  # noqa: F811
+import logging
 
 logging.basicConfig(
     format="[%(levelname)s %(asctime)s %(module)s:%(lineno)d] %(message)s",
@@ -16,14 +16,12 @@ logger = logging.getLogger(__name__)
 
 EMPTY = ' '
 WAIT_MSG = "Wait for your opponent's move"
-YOURES_MSG = "Your move!"
+YOURS_MSG = "Your move!"
 
 logging.basicConfig(
     format="[%(levelname)s %(asctime)s %(module)s:%(lineno)d] %(message)s",
     level=logging.INFO,
 )
-
-logger = logging.getLogger(__name__)
 
 bot = telebot.TeleBot(bot_secrets.TOKEN)
 
@@ -38,8 +36,10 @@ def get_keyboard(game_state: list[str]) -> telebot.types.InlineKeyboardMarkup:
 
     return keyboard
 
+
 def init_state():
     return [EMPTY] * 9
+
 
 def start(state):
     users = state["user_id_arr"]
@@ -47,7 +47,7 @@ def start(state):
     this_username = db.get_user_info("user_id", users[turn])["user_name"]
     other_username = db.get_user_info("user_id", users[1 - turn])["user_name"]
 
-   
+
     msg = [None, None]
     m1 = bot.send_message(state["user_id_arr"][not turn], f"You are playing against: {this_username}\nGame Started, " + WAIT_MSG, reply_markup=get_keyboard(state["state"]))
     m2 = bot.send_message(state["user_id_arr"][turn], f"You are playing against: {other_username}\nGame Started, " + YOURES_MSG, reply_markup=get_keyboard(state["state"]))
@@ -71,6 +71,7 @@ def check_status(grid):
         if grid[2] == grid[4] == grid[6] != EMPTY:
             winner = grid[2]
     return winner
+
 
 def callback_query(call, state):
     turn = state["turn"]
@@ -101,27 +102,29 @@ def callback_query(call, state):
             db.inc_score(this_id, 3, state["game_type"])
             db.inc_score(other_id, 3, state["game_type"])
             over = True
+
         if over:
             utils.send_main_menu(call.message.chat.id, bot)
             utils.send_main_menu(other_id, bot)
             return
 
-    db.update_state_info(state["user_id_arr"][turn], {"state": tmp_state, "turn": int(1-turn)})
     
+    db.update_state_info(state["user_id_arr"][turn], {"state": tmp_state, "turn": int(1-turn)})
+
     bot.edit_message_text(WAIT_MSG,
                     state["user_id_arr"][turn],
                             state["msg_id_arr"][turn],
                             reply_markup=get_keyboard(state["state"]))
-    bot.edit_message_text(YOURES_MSG,
-                    state["user_id_arr"][not turn],
-                            state["msg_id_arr"][not turn],
-                            reply_markup=get_keyboard(state["state"]))
+    bot.edit_message_text(YOURS_MSG,
+                          state["user_id_arr"][not turn],
+                          state["msg_id_arr"][not turn],
+                          reply_markup=get_keyboard(state["state"]))
 
-    
     bot.answer_callback_query(call.id)
 
 
 def about():
     return ('⭕❌ * Tic Tac Toe * ❌⭕\n'
+            ' - duel game\n'
             'Think fast, line up three, and claim victory! 🏆\n'
             'Are you ready to outsmart your opponent? 🎯🔥')
