@@ -7,9 +7,9 @@ import FourInRow
 import Trivia
 import utils
 import emoji
+import rps_bot as Rps
 import db_connect as db
 import random
-import rock_paper_scissors.rps_bot as Rps
 
 
 logging.basicConfig(
