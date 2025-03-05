@@ -7,7 +7,7 @@ import FourInRow
 import Trivia
 import utils
 import emoji
-import rock_paper_scissors.rps_bot as Rps
+import rps_bot as Rps
 import db_connect as db
 
 
@@ -28,13 +28,6 @@ games = {
 }
 
 # single_player_games = ["rock-paper-scissors"]
-
-
-def check_register(message: telebot.types.Message):
-    user_id = message.from_user.id
-    user = db.get_user_info("user_id", user_id)
-    if not user:
-        db.create_user(user_id, message.chat.id, message.from_user.username, "o")
 
 
 def check_register(message: telebot.types.Message):
