@@ -94,13 +94,13 @@ def callback_query(call: telebot.types.CallbackQuery):
     if check_winner(game["grid"], game["turn"]):
         bot.edit_message_text(format_grid(game["grid"]) + f"\n\n🎉 {game['turn']} Wins!", chat_id, call.message.message_id)
         del games[chat_id]
-        utils.send_main_menu(call.message, bot)
+        utils.send_main_menu(call.message.chat.id, bot)
         return
 
     if is_draw(game["grid"]):
         bot.edit_message_text(format_grid(game["grid"]) + "\n\n😲 It's a Draw!", chat_id, call.message.message_id)
         del games[chat_id]
-        utils.send_main_menu(call.message, bot)
+        utils.send_main_menu(call.message.chat.id, bot)
         return
 
     # Switch turns
