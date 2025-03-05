@@ -77,8 +77,6 @@ def callback_query(call: telebot.types.CallbackQuery, state):
     db.update_state_info(state["user_id_arr"][0], {"state": state["state"]})
 
     if all(state["state"]):
-        result = check_winner(state["state"])
-
         winner = rps_game(state["state"])
 
         if winner == 2:
@@ -109,3 +107,14 @@ def callback_query(call: telebot.types.CallbackQuery, state):
                 reply_markup=telebot.types.InlineKeyboardMarkup(),
             )
             utils.send_main_menu(state["user_id_arr"][not index], bot)
+
+
+def about():
+    return (
+        "🪨✂️📜 * Rock Paper Scissors * 📜✂️🪨\n"
+        " - duel game\n"
+        "the ultimate battle of chance! Choose rock (🪨) to crush scissors, "
+        "scissors (✂️) to cut paper, or paper (📜) to cover rock. "
+        "Think fast, play smart, and outwit your opponent in this timeless showdown! 🎮🔥"
+    )
+
