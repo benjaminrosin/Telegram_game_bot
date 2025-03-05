@@ -73,7 +73,9 @@ def is_draw(grid: list[list[str]]) -> bool:
 def create_keyboard() -> InlineKeyboardMarkup:
     """Generate inline keyboard for column selection."""
     keyboard = InlineKeyboardMarkup()
-    buttons = [InlineKeyboardButton(str(i+1), callback_data=str(i)) for i in range(COLS)]
+    buttons = [
+        InlineKeyboardButton(str(i + 1), callback_data=str(i)) for i in range(COLS)
+    ]
     keyboard.add(*buttons)
     return keyboard
 
@@ -87,14 +89,18 @@ def start(state: dict):
 
     turn = state["turn"]
     msg = [None, None]
-    m1 = bot.send_message(state["user_id_arr"][not turn],
-                          f"You are playing against: {this_username}\nGame Started, {WAIT_MSG}\n"
-                          f"{format_grid(state["state"])}",
-                          reply_markup=create_keyboard())
-    m2 = bot.send_message(state["user_id_arr"][turn],
-                          f"You are playing against: {other_username}\nGame Started, {YOURS_MSG}\n"
-                          f"{format_grid(state["state"])}",
-                          reply_markup=create_keyboard())
+    m1 = bot.send_message(
+        state["user_id_arr"][not turn],
+        f"You are playing against: {this_username}\nGame Started, {WAIT_MSG}\n"
+        f"{format_grid(state['state'])}",
+        reply_markup=create_keyboard(),
+    )
+    m2 = bot.send_message(
+        state["user_id_arr"][turn],
+        f"You are playing against: {other_username}\nGame Started, {YOURS_MSG}\n"
+        f"{format_grid(state['state'])}",
+        reply_markup=create_keyboard(),
+    )
     msg[not turn] = m1.id
     msg[turn] = m2.id
 
@@ -117,16 +123,20 @@ def callback_query(call: telebot.types.CallbackQuery, state: dict):
         return
 
     if check_winner(grid, db.getEmoji(state["user_id_arr"][turn])):
-        bot.edit_message_text(f"{format_grid(state["state"])}\n\n🎉 You Won!",
-                              state["user_id_arr"][turn],
-                              state["msg_id_arr"][turn],
-                              reply_markup=InlineKeyboardMarkup())
+        bot.edit_message_text(
+            f"{format_grid(state['state'])}\n\n🎉 You Won!",
+            state["user_id_arr"][turn],
+            state["msg_id_arr"][turn],
+            reply_markup=InlineKeyboardMarkup(),
+        )
         db.inc_score(state["user_id_arr"][turn], 7, state["game_type"])
 
-        bot.edit_message_text(f"{format_grid(state["state"])}\n\nYou Lost!",
-                              state["user_id_arr"][not turn],
-                              state["msg_id_arr"][not turn],
-                              reply_markup=InlineKeyboardMarkup())
+        bot.edit_message_text(
+            f"{format_grid(state['state'])}\n\nYou Lost!",
+            state["user_id_arr"][not turn],
+            state["msg_id_arr"][not turn],
+            reply_markup=InlineKeyboardMarkup(),
+        )
 
         utils.send_main_menu(state["user_id_arr"][0], bot)
         utils.send_main_menu(state["user_id_arr"][1], bot)
@@ -134,31 +144,39 @@ def callback_query(call: telebot.types.CallbackQuery, state: dict):
 
     if is_draw(grid):
         for i in [0, 1]:
-            bot.edit_message_text(f"{format_grid(state["state"])}\n\nIts a Draw",
-                                  state["user_id_arr"][i],
-                                  state["msg_id_arr"][i],
-                                  reply_markup=InlineKeyboardMarkup())
+            bot.edit_message_text(
+                f"{format_grid(state['state'])}\n\nIts a Draw",
+                state["user_id_arr"][i],
+                state["msg_id_arr"][i],
+                reply_markup=InlineKeyboardMarkup(),
+            )
             db.inc_score(state["user_id_arr"][i], 3, state["game_type"])
             utils.send_main_menu(state["user_id_arr"][i], bot)
         return
 
-    db.update_state_info(state["user_id_arr"][turn], {"state": grid, "turn": 1-turn})
-    logger.info(f"state after: {db.get_state_info_by_ID(state["user_id_arr"][turn])}")
+    db.update_state_info(state["user_id_arr"][turn], {"state": grid, "turn": 1 - turn})
+    logger.info(f"state after: {db.get_state_info_by_ID(state['user_id_arr'][turn])}")
 
-    #bot.edit_message_text(format_grid(game["grid"]), chat_id, call.message.message_id, reply_markup=create_keyboard())
+    # bot.edit_message_text(format_grid(game["grid"]), chat_id, call.message.message_id, reply_markup=create_keyboard())
 
-    bot.edit_message_text(f"{WAIT_MSG}\n{format_grid(state["state"])}",
-                          state["user_id_arr"][turn],
-                          state["msg_id_arr"][turn],
-                          reply_markup=create_keyboard())
-    bot.edit_message_text(f"{YOURS_MSG}\n{format_grid(state["state"])}",
-                          state["user_id_arr"][not turn],
-                          state["msg_id_arr"][not turn],
-                          reply_markup=create_keyboard())
+    bot.edit_message_text(
+        f"{WAIT_MSG}\n{format_grid(state['state'])}",
+        state["user_id_arr"][turn],
+        state["msg_id_arr"][turn],
+        reply_markup=create_keyboard(),
+    )
+    bot.edit_message_text(
+        f"{YOURS_MSG}\n{format_grid(state['state'])}",
+        state["user_id_arr"][not turn],
+        state["msg_id_arr"][not turn],
+        reply_markup=create_keyboard(),
+    )
 
 
 def about():
-    return ('🔴🟡 * 4 in a Row * 🟡🔴\n'
-            ' - duel game\n'
-            'Drop your pieces, connect four, and outplay your opponent! 🏆\n'
-            'Think ahead, block their moves, and claim victory! 🎯🔥')
+    return (
+        "🔴🟡 * 4 in a Row * 🟡🔴\n"
+        " - duel game\n"
+        "Drop your pieces, connect four, and outplay your opponent! 🏆\n"
+        "Think ahead, block their moves, and claim victory! 🎯🔥"
+    )

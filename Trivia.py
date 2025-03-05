@@ -13,11 +13,11 @@ trivia_cache = []  # Store pre-fetched questions
 
 def init_state():
     return {
-            "question": '',
-            "correct": '',
-            "counter": 1,
-            "wrong": 0,
-        }
+        "question": "",
+        "correct": "",
+        "counter": 1,
+        "wrong": 0,
+    }
 
 
 def get_trivia_question() -> dict | None:
@@ -53,7 +53,9 @@ def start(state):
     trivia_data = get_trivia_question()
 
     if trivia_data is None:
-        bot.send_message(user_id, "⚠️ Sorry, I couldn't fetch a trivia question. Try again later!")
+        bot.send_message(
+            user_id, "⚠️ Sorry, I couldn't fetch a trivia question. Try again later!"
+        )
         utils.send_main_menu(user_id, bot)
         return
 
@@ -63,13 +65,17 @@ def start(state):
     options = [state["state"]["correct"]] + trivia_data["incorrect_answers"]
     random.shuffle(options)
 
-    text = (f"🎯 *Category:* {trivia_data["category"]}\n"
-            f"💪 *Difficulty:* {trivia_data["difficulty"]}\n\n"
-            f"❓ *{state["state"]["question"]}*")
+    text = (
+        f"🎯 *Category:* {trivia_data['category']}\n"
+        f"💪 *Difficulty:* {trivia_data['difficulty']}\n\n"
+        f"❓ *{state['state']['question']}*"
+    )
 
     db.update_state_info(user_id, {"state": state["state"]})
 
-    bot.send_message(user_id, text, parse_mode="Markdown", reply_markup=create_keyboard(options))
+    bot.send_message(
+        user_id, text, parse_mode="Markdown", reply_markup=create_keyboard(options)
+    )
 
 
 def callback_query(call: telebot.types.CallbackQuery, state: dict):
@@ -78,18 +84,28 @@ def callback_query(call: telebot.types.CallbackQuery, state: dict):
 
     correct_answer = state["state"]["correct"]
     if call.data == correct_answer:
-        bot.edit_message_text(f"✅ Correct! The answer is: {correct_answer}", user_id, call.message.message_id)
+        bot.edit_message_text(
+            f"✅ Correct! The answer is: {correct_answer}",
+            user_id,
+            call.message.message_id,
+        )
     else:
-        bot.edit_message_text(f"❌ Wrong! The correct answer was: {correct_answer}", user_id, call.message.message_id)
+        bot.edit_message_text(
+            f"❌ Wrong! The correct answer was: {correct_answer}",
+            user_id,
+            call.message.message_id,
+        )
         state["state"]["wrong"] += 1
 
     if state["state"]["counter"] == 5:
         correctly_answered = state["state"]["counter"] - state["state"]["wrong"]
-        bot.send_message(call.message.chat.id,
-                         f"🧠✅❌ * Summary * ❌✅🧠\n"
-                         f"out of {state["state"]["counter"]} questions you "
-                         f"answered {correctly_answered} correctly.",
-                         parse_mode="Markdown")
+        bot.send_message(
+            call.message.chat.id,
+            f"🧠✅❌ * Summary * ❌✅🧠\n"
+            f"out of {state['state']['counter']} questions you "
+            f"answered {correctly_answered} correctly.",
+            parse_mode="Markdown",
+        )
         db.inc_score(user_id, correctly_answered * 5, state["game_type"])
         utils.send_main_menu(user_id, bot)
         return
@@ -101,14 +117,15 @@ def callback_query(call: telebot.types.CallbackQuery, state: dict):
 
 
 def reset_state():
-    #del games[chat_id]
+    # del games[chat_id]
     # delete from cache
     print("skipping trivia reset")
 
 
 def about():
-    return ('🧠 * Trivia Challenge * 🧠\n'
-            ' - single player game\n'
-            'Answer questions, and compete for the top spot! 🏆\n'
-            "Ready to prove you're the ultimate trivia master? 🎯🎉")
-
+    return (
+        "🧠 * Trivia Challenge * 🧠\n"
+        " - single player game\n"
+        "Answer questions, and compete for the top spot! 🏆\n"
+        "Ready to prove you're the ultimate trivia master? 🎯🎉"
+    )

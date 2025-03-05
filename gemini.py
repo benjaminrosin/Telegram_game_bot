@@ -14,9 +14,7 @@ def generate(prompt: str, args: str):
         types.Content(
             role="user",
             parts=[
-                types.Part.from_text(
-                    text=args
-                ),
+                types.Part.from_text(text=args),
             ],
         ),
     ]
@@ -27,16 +25,14 @@ def generate(prompt: str, args: str):
         max_output_tokens=8192,
         response_mime_type="application/json",
         system_instruction=[
-            types.Part.from_text(
-                text=prompt
-            ),
+            types.Part.from_text(text=prompt),
         ],
     )
 
     response = client.models.generate_content(
-            model=model,
-            contents=contents,
-            config=generate_content_config,
+        model=model,
+        contents=contents,
+        config=generate_content_config,
     )
 
     return json.loads(response.text)
@@ -44,10 +40,10 @@ def generate(prompt: str, args: str):
 
 text = """given the next vector, the vector represents 3*3 grid for tic tec toe game, you are '2', 
 return a index for your move"""
-arr = ['0' for _ in range(9)]
+arr = ["0" for _ in range(9)]
 
-text = ''' 
-'''
+text = """ 
+"""
 arr = []
-d = generate(text, ', '.join(arr))
+d = generate(text, ", ".join(arr))
 print(d)

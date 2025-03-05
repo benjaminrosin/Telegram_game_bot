@@ -17,13 +17,19 @@ def send_main_menu(user_id: int, bot: telebot.TeleBot):
     keyboard.add(InlineKeyboardButton("Help", callback_data="Help"))
     keyboard.add(InlineKeyboardButton("LeaderBoards", callback_data="LeaderBoards"))
     keyboard.add(InlineKeyboardButton("Features", callback_data="Features"))
-    keyboard.add(InlineKeyboardButton("Share with Friends", url=f"tg://msg?text={encoded_share_message}"))
+    keyboard.add(
+        InlineKeyboardButton(
+            "Share with Friends", url=f"tg://msg?text={encoded_share_message}"
+        )
+    )
     bot.send_message(user_id, "Choose an option:", reply_markup=keyboard)
 
 
 def edit_selected_msg(call: telebot.types.CallbackQuery, bot: telebot.TeleBot):
-    bot.edit_message_text(f"You selected: *{call.data}*",
-                          call.message.chat.id,
-                          call.message.message_id,
-                          reply_markup=InlineKeyboardMarkup(),
-                          parse_mode='Markdown')
+    bot.edit_message_text(
+        f"You selected: *{call.data}*",
+        call.message.chat.id,
+        call.message.message_id,
+        reply_markup=InlineKeyboardMarkup(),
+        parse_mode="Markdown",
+    )

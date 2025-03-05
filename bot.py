@@ -33,7 +33,12 @@ def check_register(message: telebot.types.Message):
     user_id = message.from_user.id
     user = db.get_user_info("user_id", user_id)
     if not user:
-        db.create_user(user_id, message.chat.id, message.from_user.username, random.choice(list(emoji.EMOJI_DATA.keys())))
+        db.create_user(
+            user_id,
+            message.chat.id,
+            message.from_user.username,
+            random.choice(list(emoji.EMOJI_DATA.keys())),
+        )
 
 
 @bot.message_handler(commands=["start"])
@@ -42,10 +47,13 @@ def send_welcome(message: telebot.types.Message):
     check_register(message)
 
     user = db.get_user_info("user_id", message.chat.id)
-    bot.reply_to(message, f"🤖 Welcome! 🤖\n"
-                          f"Your Name is: {user['user_name']}\n"
-                          f"Your emoji is: {user['emoji']}\n"
-                          f"use '/rename' or '/reemoji' to change them")
+    bot.reply_to(
+        message,
+        f"🤖 Welcome! 🤖\n"
+        f"Your Name is: {user['user_name']}\n"
+        f"Your emoji is: {user['emoji']}\n"
+        f"use '/rename' or '/reemoji' to change them",
+    )
 
     utils.send_main_menu(message.from_user.id, bot)
 
@@ -85,9 +93,9 @@ def scoreboard_callback_query(call: telebot.types.CallbackQuery):
     scoreboard = "🏆 *Scoreboard* 🏆\n\n"
     for g in games:
         top = db.get_top_scorers(g)
-        scoreboard += '*{}*:\n🥇 *{}*\n🥈 *{}*\n🥉 *{}*\n\n'.format(g, *top)
+        scoreboard += "*{}*:\n🥇 *{}*\n🥈 *{}*\n🥉 *{}*\n\n".format(g, *top)
 
-    bot.send_message(call.message.chat.id, scoreboard, parse_mode='Markdown')
+    bot.send_message(call.message.chat.id, scoreboard, parse_mode="Markdown")
     utils.send_main_menu(call.message.chat.id, bot)
 
 
@@ -100,7 +108,7 @@ def features_callback_query(call: telebot.types.CallbackQuery):
         msg += g.about()
         msg += "\n\n"
 
-    bot.send_message(call.message.chat.id, msg, parse_mode='Markdown')
+    bot.send_message(call.message.chat.id, msg, parse_mode="Markdown")
     utils.send_main_menu(call.message.chat.id, bot)
 
 
@@ -140,7 +148,7 @@ def callback_query_for_move(call: telebot.types.CallbackQuery):
     logger.info(f"call: {call.message.chat.id} - state = {state}")
     if state:
         game_type = state["game_type"]
-        curr_game = games[game_type] # current game module
+        curr_game = games[game_type]  # current game module
         curr_game.callback_query(call, state)
 
 
@@ -152,13 +160,17 @@ def raname(message: telebot.types.Message):
     )
     arr = message.text.split()
     if len(arr) != 2:
-        bot.reply_to(message, "correct use:\n/rename <new_name>\nthe name cannot contain spaces")
+        bot.reply_to(
+            message, "correct use:\n/rename <new_name>\nthe name cannot contain spaces"
+        )
     else:  # correct behavior
         bot.reply_to(message, f"your new user name is: {arr[1]}")
-        logger.info(f"[#{message.chat.id}.{message.message_id} {message.chat.username!r}] {message.text!r}")
-        #print('update DB')
-        db.update_user_info(message.chat.id, { "user_name": arr[1]})
-        utils.send_main_menu(message.chat.id, bot)
+        logger.info(
+            f"[#{message.chat.id}.{message.message_id} {message.chat.username!r}] {message.text!r}"
+        )
+        # print('update DB')
+        db.update_user_info(message.chat.id, {"user_name": arr[1]})
+    utils.send_main_menu(message.chat.id, bot)
 
 
 def is_emoji(s: str) -> bool:
@@ -174,12 +186,14 @@ def reemoji(message: telebot.types.Message):
     arr = message.text.split()
     if len(arr) != 2 or not is_emoji(arr[1]):
         bot.reply_to(message, "correct use:\n/reemoji <new_emoji>")
-    else: # correct behavior
+    else:  # correct behavior
         bot.reply_to(message, f"your new emoji is: {arr[1]}")
-        logger.info(f"[#{message.chat.id}.{message.message_id} {message.chat.username!r}] {message.text!r}")
-        #print('update DB')
-        db.update_user_info(message.chat.id, { "emoji": arr[1] })
-        utils.send_main_menu(message.chat.id, bot)
+        logger.info(
+            f"[#{message.chat.id}.{message.message_id} {message.chat.username!r}] {message.text!r}"
+        )
+        # print('update DB')
+        db.update_user_info(message.chat.id, {"emoji": arr[1]})
+    utils.send_main_menu(message.chat.id, bot)
 
 
 @bot.message_handler(commands=["help", "h"])
