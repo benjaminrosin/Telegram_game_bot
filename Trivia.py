@@ -84,11 +84,13 @@ def callback_query(call: telebot.types.CallbackQuery, state: dict):
         state["state"]["wrong"] += 1
 
     if state["state"]["counter"] == 5:
+        correctly_answered = state["state"]["counter"] - state["state"]["wrong"]
         bot.send_message(call.message.chat.id,
                          f"🧠✅❌ * Summary * ❌✅🧠\n"
                          f"out of {state["state"]["counter"]} questions you "
-                         f"answered {state["state"]["counter"] - state["state"]["wrong"]} correctly.",
+                         f"answered {correctly_answered} correctly.",
                          parse_mode="Markdown")
+        db.inc_score(user_id, correctly_answered * 5, state["game_type"])
         utils.send_main_menu(user_id, bot)
         return
 

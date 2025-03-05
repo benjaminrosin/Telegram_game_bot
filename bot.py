@@ -104,11 +104,6 @@ def features_callback_query(call: telebot.types.CallbackQuery):
     utils.send_main_menu(call.message.chat.id, bot)
 
 
-# TO CHANGE
-# init_state
-# start
-# callback_query
-
 @bot.callback_query_handler(func=lambda call: call.data in games.keys())
 def callback_query_for_choosing_game(call: telebot.types.CallbackQuery):
     game_type = call.data
@@ -124,7 +119,7 @@ def callback_query_for_choosing_game(call: telebot.types.CallbackQuery):
     # check if a queue exists
     queue = db.get_queue_info("game_type", game_type)
     if queue:
-        # Retrive other player's data - no queues for single
+        # Retrieve other player's data - no queues for single
         other_user_id = queue["user_id"]
         # Queue exists, delete it and create a new game
         db.delete_queue(other_user_id)
@@ -143,33 +138,10 @@ def callback_query_for_move(call: telebot.types.CallbackQuery):
     user_id = call.from_user.id
     state = db.get_state_info_by_ID(user_id)
     logger.info(f"call: {call.message.chat.id} - state = {state}")
-    if state is not None:
-        #is_single =  db.is_single(user_id) - Single-Player = True, Multi-Player = False
-        game_type = state["game_type"]
-        #logger.info(f"game_type: {game_type}")
-        curr_game = games[game_type] # current game module
-        curr_game.callback_query(call, state)
-#------------------------------------------------------------------------------------------------------------------------------
-# to check
-#------------------------------------------------------------------------------------------------------------------------------
-
-#
-"""
-@bot.callback_query_handler(func=lambda call: True)
-def callback_query_for_move(call):
-    user_id = call.from_user.id
-    state = db.get_state_info_by_ID(user_id)
-    if state is not None:
-        #is_single =  db.is_single(user_id) - Single-Player = True, Multi-Player = False
+    if state:
         game_type = state["game_type"]
         curr_game = games[game_type] # current game module
         curr_game.callback_query(call, state)
-
-
-"""
-
-    # ask what to send
-    # utils.edit_selected_msg(call, bot)
 
 
 # TO CHANGE - DONE
@@ -182,10 +154,12 @@ def raname(message: telebot.types.Message):
     if len(arr) != 2:
         bot.reply_to(message, "correct use:\n/rename <new_name>\nthe name cannot contain spaces")
     else:  # correct behavior
-        bot.reply_to(message, f"you choose {arr[1]}")
+        bot.reply_to(message, f"your new user name is: {arr[1]}")
         logger.info(f"[#{message.chat.id}.{message.message_id} {message.chat.username!r}] {message.text!r}")
         #print('update DB')
-        db.update_user_info(message.chat.id, { "user_name": arr[1] })
+        db.update_user_info(message.chat.id, { "user_name": arr[1]})
+        utils.send_main_menu(message.chat.id, bot)
+
 
 def is_emoji(s: str) -> bool:
     return s in emoji.EMOJI_DATA
@@ -201,10 +175,12 @@ def reemoji(message: telebot.types.Message):
     if len(arr) != 2 or not is_emoji(arr[1]):
         bot.reply_to(message, "correct use:\n/reemoji <new_emoji>")
     else: # correct behavior
-        bot.reply_to(message, f"you choose {arr[1]}")
+        bot.reply_to(message, f"your new emoji is: {arr[1]}")
         logger.info(f"[#{message.chat.id}.{message.message_id} {message.chat.username!r}] {message.text!r}")
         #print('update DB')
         db.update_user_info(message.chat.id, { "emoji": arr[1] })
+        utils.send_main_menu(message.chat.id, bot)
+
 
 @bot.message_handler(commands=["help", "h"])
 def help(message: telebot.types.Message):

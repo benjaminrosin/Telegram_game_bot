@@ -47,10 +47,13 @@ def start(state):
     this_username = db.get_user_info("user_id", users[turn])["user_name"]
     other_username = db.get_user_info("user_id", users[1 - turn])["user_name"]
 
-
     msg = [None, None]
-    m1 = bot.send_message(state["user_id_arr"][not turn], f"You are playing against: {this_username}\nGame Started, " + WAIT_MSG, reply_markup=get_keyboard(state["state"]))
-    m2 = bot.send_message(state["user_id_arr"][turn], f"You are playing against: {other_username}\nGame Started, " + YOURS_MSG, reply_markup=get_keyboard(state["state"]))
+    m1 = bot.send_message(state["user_id_arr"][not turn],
+                          f"You are playing against: {this_username}\nGame Started, " + WAIT_MSG,
+                          reply_markup=get_keyboard(state["state"]))
+    m2 = bot.send_message(state["user_id_arr"][turn],
+                          f"You are playing against: {other_username}\nGame Started, " + YOURS_MSG,
+                          reply_markup=get_keyboard(state["state"]))
     msg[not turn] = m1.id
     msg[turn] = m2.id
     db.update_state_info(users[0], {"msg_id_arr": msg})
@@ -108,7 +111,6 @@ def callback_query(call, state):
             utils.send_main_menu(other_id, bot)
             return
 
-    
     db.update_state_info(state["user_id_arr"][turn], {"state": tmp_state, "turn": int(1-turn)})
 
     bot.edit_message_text(WAIT_MSG,

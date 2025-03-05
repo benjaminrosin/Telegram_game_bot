@@ -18,8 +18,7 @@ logging.basicConfig(
 WAIT_MSG = "Wait for your opponent's move"
 YOURS_MSG = "Your move!"
 ROWS, COLS = 6, 7
-EMPTY, RED, YELLOW = "⚪", "🔴", "🟡"
-PIECES = ["🔴", "🟡"]
+EMPTY = "⚪"
 
 
 def init_state() -> list[list[str]]:
@@ -81,21 +80,26 @@ def create_keyboard() -> InlineKeyboardMarkup:
 
 def start(state: dict):
     """Start a new 4-in-a-Row game."""
-    user1_id, user2_id = state["user_id_arr"]
+    users = state["user_id_arr"]
+    turn = state["turn"]
+    this_username = db.get_user_info("user_id", users[turn])["user_name"]
+    other_username = db.get_user_info("user_id", users[1 - turn])["user_name"]
 
     turn = state["turn"]
     msg = [None, None]
     m1 = bot.send_message(state["user_id_arr"][not turn],
-                          f"Game Started, {WAIT_MSG}\n{format_grid(state["state"])}",
+                          f"You are playing against: {this_username}\nGame Started, {WAIT_MSG}\n"
+                          f"{format_grid(state["state"])}",
                           reply_markup=create_keyboard())
     m2 = bot.send_message(state["user_id_arr"][turn],
-                          f"Game Started, {YOURS_MSG}\n{format_grid(state["state"])}",
+                          f"You are playing against: {other_username}\nGame Started, {YOURS_MSG}\n"
+                          f"{format_grid(state["state"])}",
                           reply_markup=create_keyboard())
     msg[not turn] = m1.id
     msg[turn] = m2.id
 
     logger.info(f"starts {__name__} game, between: {state['user_id_arr']}")
-    db.update_state_info(user1_id, {"msg_id_arr": msg})
+    db.update_state_info(users[0], {"msg_id_arr": msg})
 
 
 def callback_query(call: telebot.types.CallbackQuery, state: dict):
@@ -108,15 +112,17 @@ def callback_query(call: telebot.types.CallbackQuery, state: dict):
     grid = state["state"]
     column = int(call.data)
 
-    if not drop_piece(grid, column, PIECES[turn]):
+    if not drop_piece(grid, column, db.getEmoji(state["user_id_arr"][turn])):
         bot.answer_callback_query(call.id, "Column is full! Choose another.")
         return
 
-    if check_winner(grid, PIECES[turn]):
+    if check_winner(grid, db.getEmoji(state["user_id_arr"][turn])):
         bot.edit_message_text(f"{format_grid(state["state"])}\n\n🎉 You Won!",
                               state["user_id_arr"][turn],
                               state["msg_id_arr"][turn],
                               reply_markup=InlineKeyboardMarkup())
+        db.inc_score(state["user_id_arr"][turn], 7, state["game_type"])
+
         bot.edit_message_text(f"{format_grid(state["state"])}\n\nYou Lost!",
                               state["user_id_arr"][not turn],
                               state["msg_id_arr"][not turn],
@@ -132,7 +138,7 @@ def callback_query(call: telebot.types.CallbackQuery, state: dict):
                                   state["user_id_arr"][i],
                                   state["msg_id_arr"][i],
                                   reply_markup=InlineKeyboardMarkup())
-
+            db.inc_score(state["user_id_arr"][i], 3, state["game_type"])
             utils.send_main_menu(state["user_id_arr"][i], bot)
         return
 
