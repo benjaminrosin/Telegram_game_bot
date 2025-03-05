@@ -25,11 +25,12 @@ def start(state):
 
     msg = []
     for i in [0, 1]:
+        opponent = db.get_user_info("user_id", state["user_id_arr"][not i])["user_name"]
         msg.append(
-            (
-                bot.send_message(
+            (bot.send_message(
                     state["user_id_arr"][i],
-                    "Game Started, choose your move",
+                    f"You are playing against: {opponent}\n"
+                    f"Game Started, choose your move",
                     reply_markup=get_rps_buttons(),
                 ).id
             )
@@ -49,17 +50,6 @@ def get_rps_buttons() -> telebot.types.InlineKeyboardMarkup:
     return markup
 
 
-def check_winner(choices):
-    result = rps_game(choices)
-    if result == 0:
-        response = "It's a tie!"
-    elif result == 1:
-        response = "Player 1 lost Player 2 won"
-    elif result == -1:
-        response = "Player 1 won Player 2 lost"
-    return response
-
-
 def callback_query(call: telebot.types.CallbackQuery, state):
     user_id = call.message.chat.id
     index = state["user_id_arr"].index(user_id)
@@ -74,10 +64,10 @@ def callback_query(call: telebot.types.CallbackQuery, state):
     if all(state["state"]):
         winner = rps_game(state["state"])
 
-        if winner == 2:
+        if winner == 2:  # tie
             for i in [0, 1]:
                 bot.edit_message_text(
-                    "It's a tie",
+                    f"It's a tie\nyou both have chosen {state["state"][0]}",
                     state["user_id_arr"][i],
                     state["msg_id_arr"][i],
                     reply_markup=telebot.types.InlineKeyboardMarkup(),
@@ -86,8 +76,12 @@ def callback_query(call: telebot.types.CallbackQuery, state):
                 utils.send_main_menu(state["user_id_arr"][i], bot)
 
         else:
+            winner = db.get_user_info("user_id", state["user_id_arr"][index])["user_name"]
+
+            msg = "{} won!\n you chose {}\n your opponent chose{}"
+
             bot.edit_message_text(
-                f"player {db.get_user_info('user_id', ['user_id_arr'][index])['user_name']} won! player {db.get_user_info('user_id', ['user_id_arr'][not index])['user_name']} lost! ",
+                msg.format(winner, state["state"][index], state["state"][not index]),
                 state["user_id_arr"][index],
                 state["msg_id_arr"][index],
                 reply_markup=telebot.types.InlineKeyboardMarkup(),
@@ -96,7 +90,7 @@ def callback_query(call: telebot.types.CallbackQuery, state):
             utils.send_main_menu(state["user_id_arr"][index], bot)
 
             bot.edit_message_text(
-                f"player {db.get_user_info('user_id', ['user_id_arr'][index])['user_name']} won! player {db.get_user_info('user_id', ['user_id_arr'][not index])['user_name']} lost! ",
+                msg.format(winner, state["state"][not index], state["state"][index]),
                 state["user_id_arr"][not index],
                 state["msg_id_arr"][not index],
                 reply_markup=telebot.types.InlineKeyboardMarkup(),
