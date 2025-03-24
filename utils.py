@@ -9,7 +9,7 @@ def send_main_menu(user_id: int, bot: telebot.TeleBot):
     db_connect.delete_queue(user_id)
     db_connect.delete_state(user_id)
 
-    share_message = f"Check out this awesome game bot!\nLet's play together: {bot_secrets.BOT_USERNAME}"
+    share_message = f"Check out this awesome game bot!\nLet's play together: @{bot.user.username}"
     encoded_share_message = urllib.parse.quote(share_message)
 
     keyboard = InlineKeyboardMarkup(row_width=1)
